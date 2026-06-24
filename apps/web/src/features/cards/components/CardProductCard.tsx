@@ -70,7 +70,7 @@ export function CardProductCard({ name, cardType, priceEth, stock }: Props) {
 
           <PurchaseDialog
   product={{
-    id: "",
+    id: id,
     name,
     cardType,
     priceEth,
