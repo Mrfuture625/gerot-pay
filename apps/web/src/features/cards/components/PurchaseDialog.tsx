@@ -11,6 +11,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AppAlert } from "@/components/app/AppAlert";
+import { useAccount, useChainId, useSwitchChain, useWriteContract } from "wagmi";
+import { sepolia } from "wagmi/chains";
+import { formatEther } from "viem";
+import {
+  GEROTPAY_ABI,
+  GEROTPAY_CONTRACT_ADDRESS,
+  
+} from "@/lib/contracts/gerotpay";
+
+import { getProductIdFromCardType } from "@/lib/blockchain/products";
+import { createPurchaseRequest } from "@/lib/blockchain/purchase";
+import { waitForPurchaseConfirmation } from "@/lib/blockchain/transactions";
 
 type Step = "form" | "review";
 
@@ -27,6 +39,12 @@ type Props = {
 export function PurchaseDialog({ children, product }: Props) {
   const isPhysical = product.cardType === "physical";
   const [step, setStep] = useState<Step>("form");
+  const { address, isConnected } = useAccount();
+const chainId = useChainId();
+const { switchChainAsync } = useSwitchChain();
+const { writeContractAsync, isPending } = useWriteContract();
+
+const productId = getProductIdFromCardType(product.cardType);
 
   const [cardholderName, setCardholderName] = useState("");
   const [email, setEmail] = useState("");
@@ -166,9 +184,71 @@ function showAlert(message: string) {
               <Button
                 type="button"
                 className="bg-emerald-400 text-black hover:bg-emerald-300"
-                onClick={() => showAlert("Wallet payment step is next.")}
+                onClick={async () => {
+  try {
+    if (!isConnected || !address) {
+      showAlert("Please connect your wallet before purchasing.");
+      return;
+    }
+
+    if (chainId !== sepolia.id) {
+      await switchChainAsync({ chainId: sepolia.id });
+    }
+
+    const value = BigInt(Math.round(product.priceEth * 1e18));
+
+    const hash = await writeContractAsync(
+  createPurchaseRequest(productId, value)
+);
+
+showAlert("Waiting for blockchain confirmation...");
+
+const receipt = await waitForPurchaseConfirmation(hash);
+
+if (receipt.status !== "success") {
+  throw new Error("Transaction failed.");
+}
+
+const orderResponse = await fetch("/api/orders", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    cardProductId: product.id,
+    cardholderName,
+    customerEmail: email,
+    walletAddress: address,
+    priceEth: product.priceEth,
+    txHash: hash,
+    cardType: product.cardType,
+    shippingAddress: isPhysical
+      ? {
+          country,
+          state,
+          city,
+          postalCode,
+          addressLine1,
+          addressLine2,
+        }
+      : undefined,
+  }),
+});
+
+const orderData = await orderResponse.json();
+
+if (!orderResponse.ok) {
+  showAlert(orderData.error ?? "Payment confirmed, but order creation failed.");
+  return;
+}
+
+showAlert("Purchase successful. Your order has been created.");
+  } catch (error) {
+    showAlert("Payment was cancelled or failed.");
+  }
+}}
               >
-                Pay with Wallet
+                {isPending ? "Processing..." : "Pay with Wallet"}
               </Button>
             </div>
           </div>

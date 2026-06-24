@@ -64,8 +64,8 @@ const navItems = [
             </div>
 
             <div className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 text-xs text-emerald-300 sm:px-4 sm:py-2 sm:text-sm">
-             Wallet coming soon
-            </div>
+            ETH Payment Enabled
+           </div>
           </header>
 
           <div className="p-6">{children}</div>

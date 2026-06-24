@@ -8,7 +8,7 @@ import { sepolia } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WALLETCONNECT_PROJECT_ID } from "../constants";
 
-const config = getDefaultConfig({
+export const config = getDefaultConfig({
   appName: "GerotPay",
   projectId: WALLETCONNECT_PROJECT_ID,
   chains: [sepolia],
