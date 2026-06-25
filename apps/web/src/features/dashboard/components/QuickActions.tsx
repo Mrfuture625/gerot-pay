@@ -1,9 +1,16 @@
 import Link from "next/link";
-import { CreditCard, Gift, RefreshCw, Upload } from "lucide-react";
+import {
+  CreditCard,
+  Gift,
+  RefreshCw,
+  Upload,
+  Receipt,
+} from "lucide-react";
 import { GlassPanel } from "@/components/shared/GlassPanel";
 
 const actions = [
   { label: "Buy Card", href: "/cards", icon: CreditCard },
+  { label: "Orders", href: "/orders", icon: Receipt },
   { label: "Reload", href: "/reload", icon: RefreshCw },
   { label: "Withdraw", href: "/withdraw", icon: Upload },
   { label: "Referral", href: "/referrals", icon: Gift },
@@ -14,7 +21,7 @@ export function QuickActions() {
     <GlassPanel>
       <p className="text-sm text-zinc-400">Quick Actions</p>
 
-      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
         {actions.map((action) => {
           const Icon = action.icon;
 

@@ -9,6 +9,8 @@ import { QuickActions } from "@/features/dashboard/components/QuickActions";
 import { ProfileCard } from "@/features/dashboard/components/ProfileCard";
 import { getCurrentUser } from "@/server/users/getCurrentUser";
 import { redirect } from "next/navigation";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { LatestCardStatus } from "@/features/dashboard/components/LatestCardStatus";
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
@@ -16,6 +18,23 @@ export default async function DashboardPage() {
   if (!user) {
     redirect("/login");
   }
+
+  const { data: latestOrder } = await supabaseAdmin
+  .from("orders")
+  .select(`
+    price_eth,
+    status,
+    card_products (
+      name
+    )
+  `)
+  .eq("user_id", user.id)
+  .order("created_at", { ascending: false })
+  .limit(1)
+  .single();
+
+const order = latestOrder as any;
+
   return (
     <DashboardShell>
       <ProfileCard
@@ -35,11 +54,19 @@ telegramUsername={String(user.telegram_username)}
       <div className="grid gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
         <WalletSummaryCard />
 
-        <StatCard
-          label="Card Status"
-          value="No card yet"
-          note="Purchase a virtual or physical card."
-        />
+        {order ? (
+  <LatestCardStatus
+    cardName={order.card_products?.name ?? "GerotPay Card"}
+    price={Number(order.price_eth)}
+    status={order.status}
+  />
+) : (
+  <StatCard
+    label="Card Status"
+    value="No card yet"
+    note="Purchase a virtual or physical card."
+  />
+)}
 
         <StatCard
           label="Referral"
