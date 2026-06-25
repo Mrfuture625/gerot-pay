@@ -34,6 +34,7 @@ export default async function CardsPage({
     products.map((product) => (
       <CardProductCard
         key={product.id}
+        id={product.id}
         name={product.name}
         cardType={product.card_type}
         priceEth={Number(product.price_eth)}
