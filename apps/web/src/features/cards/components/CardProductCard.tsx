@@ -3,6 +3,7 @@ import { GlassPanel } from "@/components/shared/GlassPanel";
 import { PurchaseDialog } from "@/features/cards/components/PurchaseDialog";
 
 type Props = {
+  id: string;
   name: string;
   cardType: string;
   priceEth: number;
@@ -10,7 +11,7 @@ type Props = {
   description: string | null;
 };
 
-export function CardProductCard({ name, cardType, priceEth, stock }: Props) {
+export function CardProductCard({ id, name, cardType, priceEth, stock }: Props) {
   const isPhysical = cardType === "physical";
 
   return (
