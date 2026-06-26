@@ -9,7 +9,7 @@ import {
 import { GlassPanel } from "@/components/shared/GlassPanel";
 
 const actions = [
-  { label: "Buy Card", href: "/cards", icon: CreditCard },
+  { label: "Marketplace", href: "/marketplace", icon: CreditCard },
   { label: "Orders", href: "/orders", icon: Receipt },
   { label: "Reload", href: "/reload", icon: RefreshCw },
   { label: "Withdraw", href: "/withdraw", icon: Upload },

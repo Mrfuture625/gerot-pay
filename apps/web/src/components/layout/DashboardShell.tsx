@@ -15,10 +15,12 @@ import {
   Receipt,
   Menu,
   X,
+  Store,
 } from "lucide-react";
 
 const navItems = [
   { label: "Home", href: "/", icon: Home },
+  { label: "Marketplace", href: "/marketplace", icon: Store },
   { label: "My Card", href: "/cards", icon: CreditCard },
   { label: "Orders", href: "/orders", icon: Receipt },
   { label: "Activity", href: "/activity", icon: Activity },

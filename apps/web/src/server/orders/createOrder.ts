@@ -2,6 +2,7 @@
 
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { getCurrentUser } from "@/server/users/getCurrentUser";
+import { generateUserCard } from "@/server/cards/generateUserCard";
 
 type CreateOrderInput = {
   cardProductId: string;
@@ -42,12 +43,34 @@ export async function createOrder(input: CreateOrderInput) {
       network: "sepolia",
       payment_provider: "wallet",
     })
-    .select("id")
+    .select(`
+  id,
+  card_product_id,
+  card_products (
+    name,
+    card_type
+  )
+`)
     .single();
 
   if (orderResult.error || !orderResult.data) {
     return { error: orderResult.error?.message || "Could not create order." };
   }
+
+  const order = orderResult.data as any;
+
+const cardResult = await generateUserCard({
+  userId: user.id,
+  orderId: order.id,
+  cardProductId: order.card_product_id,
+  cardholderName: input.cardholderName,
+  cardName: order.card_products?.name ?? "GerotPay Card",
+  cardType: order.card_products?.card_type ?? input.cardType,
+});
+
+if ("error" in cardResult) {
+  return { error: cardResult.error };
+}
 
   if (input.cardType === "physical" && input.shippingAddress) {
     const shippingResult = await supabaseAdmin
@@ -68,6 +91,6 @@ export async function createOrder(input: CreateOrderInput) {
   }
 
   return {
-    orderId: orderResult.data.id,
-  };
+  orderId: order.id,
+};
 }

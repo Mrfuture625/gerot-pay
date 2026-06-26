@@ -1,57 +1,84 @@
+import { redirect } from "next/navigation";
 import { DashboardShell } from "@/components/layout/DashboardShell";
-import { CardMarketplaceHero } from "@/features/cards/components/CardMarketplaceHero";
-import { CardProductCard } from "@/features/cards/components/CardProductCard";
-import { getActiveCardProducts } from "@/server/cards/cardRepository";
-import { MarketplaceFilters } from "@/features/cards/components/MarketplaceFilters";
+import { GlassPanel } from "@/components/shared/GlassPanel";
+import { EmptyCards } from "@/features/my-cards/components/EmptyCards";
+import { VirtualCard } from "@/features/my-cards/components/VirtualCard";
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { getCurrentUser } from "@/server/users/getCurrentUser";
 
-type CardsPageProps = {
-  searchParams: Promise<{
-    type?: "virtual" | "physical";
-  }>;
-};
+function shortAddress(address?: string | null) {
+  if (!address) return "N/A";
+  return `${address.slice(0, 5)}...${address.slice(-3)}`;
+}
 
-export default async function CardsPage({
-  searchParams,
-}: CardsPageProps) {
-  const { type } = await searchParams;
+export default async function MyCardsPage() {
+  const user = await getCurrentUser();
 
-  const { data: products } =
-    await getActiveCardProducts(type);
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { data } = await supabaseAdmin
+  .from("user_cards")
+  .select("*")
+  .eq("user_id", user.id)
+  .order("created_at", { ascending: false });
+
+const cards = (data ?? []) as any[];
 
   return (
-    <DashboardShell title="Card Marketplace" subtitle="Choose your GerotPay card">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Card Marketplace</h1>
-        <p className="mt-2 text-zinc-400">
-          Choose a Virtual or Physical GerotPay card.
-        </p>
+    <DashboardShell
+      title="My Cards"
+      subtitle="Manage your GerotPay cards"
+    >
+      {cards.length === 0 ? (
+  <EmptyCards />
+) : (
+  <div className="space-y-6">
+    {cards.map((card) => (
+      <div
+        key={card.id}
+        className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]"
+      >
+        <VirtualCard
+          cardName={card.card_name ?? "GerotPay Card"}
+          cardholderName={card.cardholder_name ?? "GerotPay User"}
+          status={card.status}
+          maskedNumber={card.masked_number}
+          expiryMonth={card.expiry_month}
+          expiryYear={card.expiry_year}
+        />
+
+        <GlassPanel>
+          <h2 className="text-xl font-semibold">Card Information</h2>
+
+          <div className="mt-6 space-y-4">
+            <div>
+              <p className="text-sm text-zinc-500">Card Balance</p>
+              <p className="mt-1 text-2xl font-semibold text-emerald-300">
+                {Number(card.balance_eth ?? 0).toFixed(2)} ETH
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-zinc-500">Wallet Address</p>
+              <p className="mt-1 text-sm">
+                {shortAddress(card.wallet_address)}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-zinc-500">Purchased On</p>
+              <p className="mt-1">
+                {new Date(card.created_at).toLocaleDateString()}
+              </p>
+            </div>
+          </div>
+        </GlassPanel>
       </div>
-
-<MarketplaceFilters />
-
-      <div className="grid gap-6 lg:grid-cols-2">
-  {products?.length ? (
-    products.map((product) => (
-      <CardProductCard
-        key={product.id}
-        id={product.id}
-        name={product.name}
-        cardType={product.card_type}
-        priceEth={Number(product.price_eth)}
-        stock={product.stock}
-        description={product.description}
-      />
-    ))
-  ) : (
-    <div className="col-span-full rounded-3xl border border-white/10 p-10 text-center text-zinc-400">
-      No cards available in this category.
-    </div>
-  )}
-</div>
-
-      <div className="mt-6">
-        <CardMarketplaceHero />
-      </div>
+    ))}
+  </div>
+)}
     </DashboardShell>
   );
 }
