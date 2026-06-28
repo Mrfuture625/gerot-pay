@@ -128,3 +128,19 @@
     @apply font-sans;
   }
 }
+html,
+body {
+  min-height: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  background: #05060a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+#__next {
+  min-height: 100%;
+  background: #05060a;
+}

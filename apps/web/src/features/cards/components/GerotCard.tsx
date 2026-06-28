@@ -26,7 +26,7 @@ export function GerotCard({
 
   return (
     <div
-      className={`group relative aspect-[1.58/1] w-full overflow-hidden rounded-[2rem] border border-white/15 bg-gradient-to-br from-zinc-950 via-zinc-900 to-black p-6 shadow-2xl shadow-emerald-950/30 transition duration-500 hover:-translate-y-2 hover:rotate-1 ${className}`}
+      className={`group relative mx-auto aspect-[1.58/1] w-full max-w-[460px] overflow-hidden rounded-[1.5rem] sm:rounded-[2rem] border border-white/15 bg-gradient-to-br from-zinc-950 via-zinc-900 to-black p-6 shadow-2xl shadow-emerald-950/30 transition duration-500 hover:-translate-y-2 hover:rotate-1 ${className}`}
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.22),transparent_22%),radial-gradient(circle_at_80%_10%,rgba(16,185,129,0.35),transparent_28%),radial-gradient(circle_at_75%_90%,rgba(34,211,238,0.22),transparent_30%)]" />
 
@@ -53,7 +53,7 @@ export function GerotCard({
         </div>
 
         <div>
-          <p className="text-2xl tracking-[0.32em] text-white">
+          <p className="truncate text-base tracking-[0.22em] text-white sm:text-xl sm:tracking-[0.28em] lg:text-2xl lg:tracking-[0.32em]">
             4892 •••• •••• 0928
           </p>
 

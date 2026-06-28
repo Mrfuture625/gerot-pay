@@ -93,7 +93,7 @@ export function DashboardShell({
       </div>
 
       <div className="relative flex min-h-screen">
-        <aside className="sticky top-0 hidden h-screen w-80 shrink-0 overflow-y-auto border-r border-white/10 bg-white/[0.035] p-5 backdrop-blur-xl lg:block">
+        <aside className="sticky top-0 hidden h-screen w-72 shrink-0 overflow-y-auto border-r border-white/10 bg-white/[0.035] p-4 backdrop-blur-xl xl:w-80 xl:p-5 lg:block">
           <div className="mb-8">
             <BrandMark />
           </div>
@@ -142,7 +142,7 @@ export function DashboardShell({
           </div>
         )}
 
-        <section className="min-w-0 flex-1">
+        <section className="min-w-0 flex-1 overflow-x-hidden">
           <header className="sticky top-0 z-40 border-b border-white/10 bg-[#05060a]/80 px-4 py-4 backdrop-blur-xl sm:px-6">
             <div className="flex items-center justify-between gap-4">
               <div className="flex min-w-0 items-center gap-3">
@@ -169,7 +169,7 @@ export function DashboardShell({
             </div>
           </header>
 
-          <div className="mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8">
+          <div className="mx-auto w-full max-w-7xl overflow-x-hidden p-4 sm:p-6 lg:p-8">
             {children}
           </div>
         </section>

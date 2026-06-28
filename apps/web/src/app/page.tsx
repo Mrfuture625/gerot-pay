@@ -131,7 +131,7 @@ export default function HomePage() {
     : "";
 
   return (
-    <main className="min-h-screen bg-[#05060a] text-white">
+    <main className="min-h-screen overflow-x-hidden bg-[#05060a] text-white">
       <section className="mx-auto max-w-7xl px-6 py-8">
         <nav className="flex items-center justify-between">
           <Link href="/">
@@ -207,7 +207,7 @@ export default function HomePage() {
               Wallet-connected crypto card platform
             </div>
 
-            <h1 className="text-5xl font-semibold tracking-tight md:text-7xl">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight md:text-7xl">
               Spend, reload and manage crypto cards from one premium wallet app.
             </h1>
 

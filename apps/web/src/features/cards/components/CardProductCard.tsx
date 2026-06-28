@@ -46,7 +46,7 @@ export function CardProductCard({
   const unlockReload = isPhysical ? 2 : 1;
 
   return (
-    <div className="rounded-[2rem] border border-white/10 bg-white/[0.035] p-5">
+    <div className="w-full min-w-0 overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.035] p-4 sm:p-5">
       <GerotCard variant={cardType} />
 
       <div className="mt-6">
@@ -60,7 +60,7 @@ export function CardProductCard({
           {description || "Premium wallet-connected GerotPay crypto card."}
         </p>
 
-        <div className="mt-6 flex items-end justify-between">
+        <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm text-zinc-500">Starting Price</p>
             <p className="text-3xl font-bold">${priceEth}</p>
@@ -170,7 +170,7 @@ function PurchaseModal({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <button className="rounded-2xl bg-emerald-400 px-5 py-3 font-semibold text-black transition hover:bg-emerald-300">
+        <button className="w-full rounded-2xl bg-emerald-400 px-5 py-3 sm:w-auto font-semibold text-black transition hover:bg-emerald-300">
           Purchase
         </button>
       </DialogTrigger>
