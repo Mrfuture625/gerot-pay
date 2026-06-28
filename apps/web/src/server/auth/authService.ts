@@ -40,7 +40,7 @@ export async function signup(input: SignupInput) {
   const existingUserResult = await getUserByTelegramId(verification.telegram_id);
 
 if (existingUserResult.data) {
-  throw new Error("This Telegram account is already linked to an existing GerotPay account.");
+  throw new Error("This Telegram account is already linked to an existing KryptPay account.");
 }
 
   const otpValid = await verifyPassword(input.otp, verification.otp_hash);

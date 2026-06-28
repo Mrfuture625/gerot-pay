@@ -1,7 +1,7 @@
 export const APP_CONFIG = {
   brand: {
-    name: "GerotPay",
-    tokenName: "Gerot",
+    name: "KryptPay",
+    tokenName: "KryptPay",
     tokenSymbol: "GP",
   },
 
@@ -11,14 +11,14 @@ export const APP_CONFIG = {
 
   cards: {
     virtual: {
-      name: "Gerot Virtual Card",
+      name: "Krypt Virtual Card",
       price: 1,
       reward: 10,
       bonus: 5,
       unlockReload: 1,
     },
     physical: {
-      name: "Gerot Physical Card",
+      name: "Krypt Physical Card",
       price: 2,
       reward: 100,
       bonus: 15,

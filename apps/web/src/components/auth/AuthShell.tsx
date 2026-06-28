@@ -14,7 +14,7 @@ export function AuthShell({
       <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-6xl items-center justify-center">
         <div className="w-full max-w-md rounded-[2rem] border border-white/10 bg-white/[0.04] p-8 shadow-2xl">
           <Link href="/" className="mb-8 block">
-            <p className="text-2xl font-semibold">GerotPay</p>
+            <p className="text-2xl font-semibold">KryptPay</p>
             <p className="text-xs text-emerald-300">Sepolia testnet platform</p>
           </Link>
 

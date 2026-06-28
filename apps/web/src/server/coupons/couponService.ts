@@ -24,9 +24,9 @@ const demoCoupons: Record<
     details: "50% discount on your card purchase.",
     discountPercent: 50,
   },
-  GEROT25: {
-    name: "Gerot Community Coupon",
-    details: "25% discount for early GerotPay users.",
+  KryptPay25: {
+    name: "KryptPay Community Coupon",
+    details: "25% discount for early KryptPay users.",
     discountPercent: 25,
   },
 };

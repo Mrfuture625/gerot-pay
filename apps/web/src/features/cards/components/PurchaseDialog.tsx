@@ -47,9 +47,9 @@ const demoCoupons: Record<
     details: "50% discount on your card purchase.",
     discountPercent: 50,
   },
-  GEROT25: {
-    name: "Gerot Community Coupon",
-    details: "25% discount for early GerotPay users.",
+  KryptPay25: {
+    name: "KryptPay Community Coupon",
+    details: "25% discount for early KryptPay users.",
     discountPercent: 25,
   },
 };
@@ -138,7 +138,7 @@ export function PurchaseDialog({ children, product }: Props) {
           <div className="mt-5 overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-zinc-950 via-zinc-900 to-black p-5">
             <div className="flex items-start justify-between">
               <div>
-                <p className="font-semibold italic">GerotPay</p>
+                <p className="font-semibold italic">KryptPay</p>
                 <p className="mt-1 text-xs uppercase tracking-[0.3em] text-emerald-300">
                   {isPhysical ? "Physical Card" : "Virtual Card"}
                 </p>
@@ -313,7 +313,7 @@ export function PurchaseDialog({ children, product }: Props) {
 
         <AppAlert
           open={alertOpen}
-          title="GerotPay Notice"
+          title="KryptPay Notice"
           message={alertMessage}
           onClose={() => setAlertOpen(false)}
         />

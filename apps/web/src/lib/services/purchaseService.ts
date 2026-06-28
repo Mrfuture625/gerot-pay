@@ -39,7 +39,7 @@ export async function purchaseCard(
     const cardId = `${input.cardType}-card`;
     const activityId = `activity-${Date.now()}`;
 
-    console.log("GerotPay purchase placeholder", {
+    console.log("KryptPay purchase placeholder", {
       cardProductId: input.cardProductId,
       cardholderName: input.cardholderName,
       email: input.email,

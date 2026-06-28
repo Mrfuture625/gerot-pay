@@ -1,12 +1,12 @@
-export const GEROTPAY_CONTRACT_ADDRESS =
+export const KryptPay_CONTRACT_ADDRESS =
   "0xA28402247bb1E29fD4860023493ccE8aA2cd6FEF" as const;
 
-export const GEROTPAY_PRODUCT_IDS = {
+export const KryptPay_PRODUCT_IDS = {
   virtual: 1,
   physical: 2,
 } as const;
 
-export const GEROTPAY_ABI = [
+export const KryptPay_ABI = [
   {
     inputs: [{ internalType: "uint256", name: "productId", type: "uint256" }],
     name: "buyCard",

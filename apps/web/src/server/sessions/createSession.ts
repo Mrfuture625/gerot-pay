@@ -27,7 +27,7 @@ export async function createSession(userId: string) {
 
   const cookieStore = await cookies();
 
-  cookieStore.set("gerotpay_session", token, {
+  cookieStore.set("KryptPay_session", token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",

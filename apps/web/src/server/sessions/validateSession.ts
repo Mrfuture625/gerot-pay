@@ -8,7 +8,7 @@ function hashToken(token: string) {
 
 export async function validateSession() {
   const cookieStore = await cookies();
-  const token = cookieStore.get("gerotpay_session")?.value;
+  const token = cookieStore.get("KryptPay_session")?.value;
 
   if (!token) return null;
 

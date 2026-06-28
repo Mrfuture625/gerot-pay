@@ -12,7 +12,7 @@ export function EmptyCards() {
       </h2>
 
       <p className="mt-2 text-sm text-zinc-400">
-        Purchase your first GerotPay card from the marketplace.
+        Purchase your first KryptPay card from the marketplace.
       </p>
 
       <Link

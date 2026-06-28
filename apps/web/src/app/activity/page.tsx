@@ -6,7 +6,7 @@ export default async function ActivityPage() {
   const activity = await getActivityTimeline();
 
   return (
-    <DashboardShell title="Activity" subtitle="Track your GerotPay transactions">
+    <DashboardShell title="Activity" subtitle="Track your KryptPay transactions">
       <ActivityTimeline activity={activity} />
     </DashboardShell>
   );

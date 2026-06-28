@@ -61,7 +61,7 @@ const remainingBalance = useMemo(() => {
     <div className="space-y-6">
       <PageHeader
         eyebrow="Withdraw"
-        title="Move funds from your GerotPay card."
+        title="Move funds from your KryptPay card."
         description="Choose a card, enter the withdrawal amount, review the destination wallet and confirm the transfer."
       />
 
@@ -86,7 +86,10 @@ const remainingBalance = useMemo(() => {
                         : "border-white/10 bg-black/25 hover:border-white/20"
                     }`}
                   >
-                    <GerotCard variant={card.type} className="rounded-[1.5rem]" />
+                    <GerotCard
+  variant={card.type}
+  className="max-w-[280px] rounded-[1.5rem] sm:max-w-[360px]"
+/>
 
                     <div className="mt-4 flex items-center justify-between">
                       <div>

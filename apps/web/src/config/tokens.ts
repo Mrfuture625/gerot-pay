@@ -19,7 +19,7 @@ export const PAYMENT_TOKENS = [
   },
   {
     symbol: "GP",
-    name: "Gerot",
+    name: "KryptPay",
     decimals: 18,
     enabled: false,
   },

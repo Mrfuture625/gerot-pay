@@ -38,7 +38,7 @@ export function ReferralDashboard({
       <PageHeader
         eyebrow="Referral"
         title="Invite friends and earn GP rewards."
-        description="Share your GerotPay referral link. When someone connects their wallet through your link, you earn GP rewards and they receive a joining bonus."
+        description="Share your KryptPay referral link. When someone connects their wallet through your link, you earn GP rewards and they receive a joining bonus."
       />
 
       <section className="grid gap-4 md:grid-cols-3">

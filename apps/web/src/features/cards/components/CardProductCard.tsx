@@ -57,7 +57,7 @@ export function CardProductCard({
         <h3 className="mt-2 text-2xl font-semibold">{name}</h3>
 
         <p className="mt-3 min-h-12 text-sm leading-6 text-zinc-400">
-          {description || "Premium wallet-connected GerotPay crypto card."}
+          {description || "Premium wallet-connected KryptPay crypto card."}
         </p>
 
         <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">

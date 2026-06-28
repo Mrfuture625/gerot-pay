@@ -8,6 +8,7 @@ import {
   RefreshCw,
   ShoppingBag,
   Upload,
+  Headphones,
 } from "lucide-react";
 
 export const navItems = [
@@ -19,4 +20,5 @@ export const navItems = [
   { label: "Reload", href: "/reload", icon: RefreshCw },
   { label: "Withdraw", href: "/withdraw", icon: Upload },
   { label: "Referral", href: "/referrals", icon: Gift },
-];
+  {label: "Support", href: "/support", icon: Headphones },
+ ];

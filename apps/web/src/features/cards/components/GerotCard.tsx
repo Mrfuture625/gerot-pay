@@ -7,7 +7,7 @@ type GerotCardProps = {
   className?: string;
 };
 
-function GerotLogo() {
+function KryptPayLogo() {
   return (
     <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-300/30 bg-gradient-to-br from-emerald-300 via-cyan-300 to-emerald-500 shadow-lg shadow-emerald-500/20">
       <div className="absolute inset-[3px] rounded-[0.85rem] bg-black/80" />
@@ -38,13 +38,13 @@ export function GerotCard({
       <div className="relative flex h-full flex-col justify-between">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xl font-semibold tracking-tight">GerotPay</p>
+            <p className="text-xl font-semibold tracking-tight">KryptPay</p>
             <p className="mt-1 text-xs uppercase tracking-[0.35em] text-emerald-300">
               {isPhysical ? "Physical" : "Virtual"} Card
             </p>
           </div>
 
-          <GerotLogo />
+          <KryptPayLogo />
         </div>
 
         <div className="flex items-center justify-between">

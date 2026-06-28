@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
-  const session = request.cookies.get("gerotpay_session")?.value;
+  const session = request.cookies.get("KryptPay_session")?.value;
   const pathname = request.nextUrl.pathname;
 
   const protectedRoutes = [

@@ -27,7 +27,7 @@ export function VirtualCard({
 
       <div className="relative flex items-start justify-between">
         <div>
-          <p className="text-sm text-emerald-300">GerotPay</p>
+          <p className="text-sm text-emerald-300">KryptPay</p>
           <h2 className="mt-1 text-xl font-semibold">{cardName}</h2>
         </div>
 

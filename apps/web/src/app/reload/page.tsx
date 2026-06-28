@@ -3,7 +3,7 @@ import { ReloadFlow } from "@/features/reload/components/ReloadFlow";
 
 export default function ReloadPage() {
   return (
-    <DashboardShell title="Reload Card" subtitle="Add funds to your GerotPay card">
+    <DashboardShell title="Reload Card" subtitle="Add funds to your KryptPay card">
       <ReloadFlow />
     </DashboardShell>
   );

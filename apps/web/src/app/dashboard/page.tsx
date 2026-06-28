@@ -68,7 +68,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <DashboardShell title="Dashboard" subtitle="GerotPay wallet overview">
+    <DashboardShell title="Dashboard" subtitle="KryptPay wallet overview">
       <div className="space-y-6">
         <section className="overflow-hidden rounded-[2.5rem] border border-white/10 bg-gradient-to-br from-white/[0.08] via-white/[0.035] to-emerald-400/[0.08] p-6">
           <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
@@ -78,7 +78,7 @@ export default function DashboardPage() {
               </p>
 
               <h1 className="mt-3 text-4xl font-semibold tracking-tight md:text-5xl">
-                Manage your GerotPay cards from one wallet dashboard.
+                Manage your KryptPay cards from one wallet dashboard.
               </h1>
 
               <p className="mt-4 max-w-2xl leading-7 text-zinc-400">
@@ -90,7 +90,7 @@ export default function DashboardPage() {
                 {!isConnected ? (
                   <div>
                     <p className="mb-3 text-sm text-zinc-400">
-                      Connect your wallet to view your GerotPay account.
+                      Connect your wallet to view your KryptPay account.
                     </p>
                     <ConnectWalletButton />
                   </div>
@@ -206,7 +206,7 @@ export default function DashboardPage() {
                   Your Cards
                 </p>
                 <h2 className="mt-2 text-2xl font-semibold">
-                  Active GerotPay cards
+                  Active KryptPay cards
                 </h2>
               </div>
 

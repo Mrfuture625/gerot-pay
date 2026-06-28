@@ -22,7 +22,7 @@ export function NetworkWarning() {
           </h3>
 
           <p className="mt-1 text-sm text-amber-200/80">
-            GerotPay currently supports the <strong>Sepolia Testnet</strong>.
+            KryptPay currently supports the <strong>Sepolia Testnet</strong>.
             Please switch your wallet network to continue.
           </p>
         </div>

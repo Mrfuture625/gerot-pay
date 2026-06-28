@@ -9,7 +9,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WALLETCONNECT_PROJECT_ID } from "../constants";
 
 export const config = getDefaultConfig({
-  appName: "GerotPay",
+  appName: "KryptPay",
   projectId: WALLETCONNECT_PROJECT_ID,
   chains: [sepolia],
   ssr: true,

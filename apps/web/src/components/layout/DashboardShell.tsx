@@ -18,7 +18,7 @@ function BrandMark() {
       </div>
 
       <div>
-        <p className="text-xl font-semibold tracking-tight">GerotPay</p>
+        <p className="text-xl font-semibold tracking-tight">KryptPay</p>
         <p className="text-xs text-emerald-300">Premium wallet banking</p>
       </div>
     </div>
@@ -75,7 +75,7 @@ function SidebarNav({
 
 export function DashboardShell({
   children,
-  title = "GerotPay Dashboard",
+  title = "KryptPay Dashboard",
   subtitle = "Wallet-connected account",
 }: {
   children: React.ReactNode;

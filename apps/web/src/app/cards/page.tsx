@@ -16,7 +16,7 @@ import { mockCards } from "@/mock/cards";
 
 export default function MyCardsPage() {
   return (
-    <DashboardShell title="My Cards" subtitle="Manage your GerotPay cards">
+    <DashboardShell title="My Cards" subtitle="Manage your KryptPay cards">
       <div className="space-y-6">
         <section className="rounded-[2.5rem] border border-white/10 bg-gradient-to-br from-white/[0.08] via-white/[0.035] to-emerald-400/[0.08] p-6">
           <p className="text-sm uppercase tracking-[0.3em] text-emerald-300">

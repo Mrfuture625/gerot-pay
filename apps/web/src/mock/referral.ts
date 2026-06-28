@@ -1,8 +1,8 @@
 import type { ReferralHistoryItem, ReferralStats } from "@/types/referral";
 
 export const mockReferralStats: ReferralStats = {
-  referralCode: "GEROT-9F2A",
-  referralLink: "https://gerotpay.com?ref=GEROT-9F2A",
+  referralCode: "KryptPay-9F2A",
+  referralLink: "https://KryptPay.com?ref=KryptPay-9F2A",
   friendsJoined: 12,
   gpEarned: 120,
   pendingRewards: 15,

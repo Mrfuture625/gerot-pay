@@ -8,7 +8,7 @@ function hashToken(token: string) {
 
 export async function deleteSession() {
   const cookieStore = await cookies();
-  const token = cookieStore.get("gerotpay_session")?.value;
+  const token = cookieStore.get("KryptPay_session")?.value;
 
   if (token) {
     const tokenHash = hashToken(token);
@@ -19,5 +19,5 @@ export async function deleteSession() {
       .eq("token_hash", tokenHash);
   }
 
-  cookieStore.delete("gerotpay_session");
+  cookieStore.delete("KryptPay_session");
 }

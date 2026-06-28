@@ -56,7 +56,7 @@ function PremiumCardPreview() {
         <div className="relative">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xl font-semibold tracking-tight">GerotPay</p>
+              <p className="text-xl font-semibold tracking-tight">KryptPay</p>
               <p className="text-xs uppercase tracking-[0.35em] text-emerald-300">
                 Premium
               </p>
@@ -135,7 +135,7 @@ export default function HomePage() {
       <section className="mx-auto max-w-7xl px-6 py-8">
         <nav className="flex items-center justify-between">
           <Link href="/">
-            <p className="text-2xl font-semibold">GerotPay</p>
+            <p className="text-2xl font-semibold">KryptPay</p>
             <p className="text-xs text-emerald-300">
               Crypto cards powered by wallets
             </p>
@@ -165,7 +165,7 @@ export default function HomePage() {
             <aside className="absolute right-0 top-0 h-full w-80 border-l border-white/10 bg-[#08090d] p-6">
               <div className="mb-8 flex items-center justify-between">
                 <div>
-                  <p className="text-xl font-semibold">GerotPay Menu</p>
+                  <p className="text-xl font-semibold">KryptPay Menu</p>
                   <p className="text-xs text-emerald-300">{shortAddress}</p>
                 </div>
 
@@ -212,7 +212,7 @@ export default function HomePage() {
             </h1>
 
             <p className="mt-6 max-w-2xl text-lg leading-8 text-zinc-400">
-              GerotPay lets users connect their wallet, purchase Virtual or
+              KryptPay lets users connect their wallet, purchase Virtual or
               Physical cards, apply coupon discounts, earn GP token rewards,
               unlock bonus balances, track card transactions and manage reloads
               from a secure Web3 dashboard.
@@ -388,7 +388,7 @@ export default function HomePage() {
         </section>
 
         <footer className="mt-16 flex flex-col gap-4 border-t border-white/10 py-6 text-sm text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} GerotPay. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} KryptPay. All rights reserved.</p>
 
           <div className="flex gap-3 text-zinc-300">
             <Link href="#" className="rounded-full border border-white/10 p-3">

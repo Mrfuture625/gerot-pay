@@ -10,7 +10,7 @@ import { canReload, getReloadBonusPreview } from "@/server/reload/reloadService"
 const cards = [
   {
     id: "virtual",
-    name: "Gerot Virtual Card",
+    name: "Krypt Virtual Card",
     type: "virtual" as const,
     balance: 34.2,
     bonus: 5,
@@ -19,7 +19,7 @@ const cards = [
   },
   {
     id: "physical",
-    name: "Gerot Physical Card",
+    name: "Krypt Physical Card",
     type: "physical" as const,
     balance: 102.5,
     bonus: 15,
@@ -70,7 +70,7 @@ const reloadAllowed = canReload({
         </p>
 
         <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-          Add funds to your GerotPay card.
+          Add funds to your KryptPay card.
         </h1>
 
         <p className="mt-4 max-w-2xl leading-7 text-zinc-400">
@@ -100,7 +100,10 @@ const reloadAllowed = canReload({
                         : "border-white/10 bg-black/25 hover:border-white/20"
                     }`}
                   >
-                    <GerotCard variant={card.type} className="rounded-[1.5rem]" />
+                    <GerotCard
+  variant={card.type}
+  className="max-w-[280px] rounded-[1.5rem] sm:max-w-[360px]"
+/>
 
                     <div className="mt-4 flex items-center justify-between">
                       <div>
