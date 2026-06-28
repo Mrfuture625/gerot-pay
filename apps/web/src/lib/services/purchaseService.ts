@@ -1,6 +1,4 @@
-import type { Hash, Address } from "viem";
-
-import { createOrder } from "@/server/orders/createOrder";
+import type { Address, Hash } from "viem";
 
 export interface PurchaseInput {
   productId: number;
@@ -29,33 +27,40 @@ export interface PurchaseInput {
 
 export interface PurchaseResult {
   success: boolean;
-  orderId?: string;
+  cardId?: string;
+  activityId?: string;
   error?: string;
 }
 
 export async function purchaseCard(
-  input: PurchaseInput
+  input: PurchaseInput,
 ): Promise<PurchaseResult> {
-  const result = await createOrder({
-    cardProductId: input.cardProductId,
-    cardholderName: input.cardholderName,
-    customerEmail: input.email,
-    walletAddress: input.walletAddress,
-    priceEth: input.priceEth,
-    txHash: input.txHash,
-    cardType: input.cardType,
-    shippingAddress: input.shippingAddress,
-  });
+  try {
+    const cardId = `${input.cardType}-card`;
+    const activityId = `activity-${Date.now()}`;
 
-  if ("error" in result) {
+    console.log("GerotPay purchase placeholder", {
+      cardProductId: input.cardProductId,
+      cardholderName: input.cardholderName,
+      email: input.email,
+      walletAddress: input.walletAddress,
+      priceEth: input.priceEth,
+      txHash: input.txHash,
+      cardType: input.cardType,
+      shippingAddress: input.shippingAddress,
+      cardId,
+      activityId,
+    });
+
+    return {
+      success: true,
+      cardId,
+      activityId,
+    };
+  } catch {
     return {
       success: false,
-      error: result.error,
+      error: "Purchase failed.",
     };
   }
-
-  return {
-    success: true,
-    orderId: result.orderId,
-  };
 }

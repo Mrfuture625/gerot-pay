@@ -1,84 +1,141 @@
-import { redirect } from "next/navigation";
+"use client";
+
+import Link from "next/link";
+import {
+  ArrowRight,
+  CreditCard,
+  Gift,
+  Lock,
+  RefreshCw,
+  ShieldCheck,
+  Upload,
+} from "lucide-react";
 import { DashboardShell } from "@/components/layout/DashboardShell";
-import { GlassPanel } from "@/components/shared/GlassPanel";
-import { EmptyCards } from "@/features/my-cards/components/EmptyCards";
-import { VirtualCard } from "@/features/my-cards/components/VirtualCard";
-import { supabaseAdmin } from "@/lib/supabase/admin";
-import { getCurrentUser } from "@/server/users/getCurrentUser";
+import { GerotCard } from "@/features/cards/components/GerotCard";
+import { mockCards } from "@/mock/cards";
 
-function shortAddress(address?: string | null) {
-  if (!address) return "N/A";
-  return `${address.slice(0, 5)}...${address.slice(-3)}`;
-}
-
-export default async function MyCardsPage() {
-  const user = await getCurrentUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  const { data } = await supabaseAdmin
-  .from("user_cards")
-  .select("*")
-  .eq("user_id", user.id)
-  .order("created_at", { ascending: false });
-
-const cards = (data ?? []) as any[];
-
+export default function MyCardsPage() {
   return (
-    <DashboardShell
-      title="My Cards"
-      subtitle="Manage your GerotPay cards"
-    >
-      {cards.length === 0 ? (
-  <EmptyCards />
-) : (
-  <div className="space-y-6">
-    {cards.map((card) => (
-      <div
-        key={card.id}
-        className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]"
-      >
-        <VirtualCard
-          cardName={card.card_name ?? "GerotPay Card"}
-          cardholderName={card.cardholder_name ?? "GerotPay User"}
-          status={card.status}
-          maskedNumber={card.masked_number}
-          expiryMonth={card.expiry_month}
-          expiryYear={card.expiry_year}
-        />
+    <DashboardShell title="My Cards" subtitle="Manage your GerotPay cards">
+      <div className="space-y-6">
+        <section className="rounded-[2.5rem] border border-white/10 bg-gradient-to-br from-white/[0.08] via-white/[0.035] to-emerald-400/[0.08] p-6">
+          <p className="text-sm uppercase tracking-[0.3em] text-emerald-300">
+            Your Cards
+          </p>
 
-        <GlassPanel>
-          <h2 className="text-xl font-semibold">Card Information</h2>
+          <h1 className="mt-3 text-4xl font-semibold tracking-tight">
+            Manage your Virtual and Physical cards.
+          </h1>
 
-          <div className="mt-6 space-y-4">
-            <div>
-              <p className="text-sm text-zinc-500">Card Balance</p>
-              <p className="mt-1 text-2xl font-semibold text-emerald-300">
-                {Number(card.balance_eth ?? 0).toFixed(2)} ETH
-              </p>
+          <p className="mt-4 max-w-2xl leading-7 text-zinc-400">
+            View card balances, bonus balance status, reload requirements and
+            card-specific activity from one premium card wallet.
+          </p>
+        </section>
+
+        <section className="grid gap-6 xl:grid-cols-2">
+          {mockCards.map((card) => (
+            <div
+              key={card.id}
+              className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5"
+            >
+              <GerotCard variant={card.type} />
+
+              <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <div className="mb-2 flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+                    <p className="text-sm text-emerald-300">{card.status}</p>
+                  </div>
+
+                  <h2 className="text-2xl font-semibold">{card.name}</h2>
+
+                  <p className="mt-2 text-sm text-zinc-400">
+                    {card.lastActivity}
+                  </p>
+                </div>
+
+                <Link
+                  href={`/cards/${card.id}`}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 px-4 py-3 text-sm text-emerald-300 hover:bg-white/10"
+                >
+                  View Details
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+
+              <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                <InfoBox
+                  icon={CreditCard}
+                  label="Balance"
+                  value={`$${card.balance.toFixed(2)}`}
+                />
+
+                <InfoBox icon={Gift} label="Bonus" value={`$${card.bonus} ${card.bonusStatus}`} />
+
+                <InfoBox
+                  icon={Lock}
+                  label="Unlock Reload"
+                  value={`$${card.unlockReload}`}
+                />
+              </div>
+
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <Link
+                  href="/reload"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-400 px-5 py-4 font-semibold text-black hover:bg-emerald-300"
+                >
+                  <RefreshCw className="h-5 w-5" />
+                  Reload
+                </Link>
+
+                <Link
+                  href="/withdraw"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 px-5 py-4 font-semibold text-zinc-300 hover:bg-white/10"
+                >
+                  <Upload className="h-5 w-5" />
+                  Withdraw
+                </Link>
+              </div>
+            </div>
+          ))}
+        </section>
+
+        <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
+          <div className="flex items-start gap-4">
+            <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-3">
+              <ShieldCheck className="h-6 w-6 text-emerald-300" />
             </div>
 
             <div>
-              <p className="text-sm text-zinc-500">Wallet Address</p>
-              <p className="mt-1 text-sm">
-                {shortAddress(card.wallet_address)}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-sm text-zinc-500">Purchased On</p>
-              <p className="mt-1">
-                {new Date(card.created_at).toLocaleDateString()}
+              <h3 className="text-xl font-semibold">Card transaction rule</h3>
+              <p className="mt-2 leading-7 text-zinc-400">
+                The main Activity page will show all wallet activity. Each card
+                details page will show only transactions related to that specific
+                card.
               </p>
             </div>
           </div>
-        </GlassPanel>
+        </section>
       </div>
-    ))}
-  </div>
-)}
     </DashboardShell>
+  );
+}
+
+function InfoBox({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof CreditCard;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-black/25 p-4">
+      <Icon className="mb-3 h-5 w-5 text-emerald-300" />
+      <p className="text-sm text-zinc-500">{label}</p>
+      <p className="mt-1 font-semibold">{value}</p>
+    </div>
   );
 }

@@ -1,74 +1,409 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
+import { useAccount } from "wagmi";
+import {
+  ArrowRight,
+  BadgeCheck,
+  CreditCard,
+  Gift,
+  Lock,
+  Menu,
+  RefreshCw,
+  ShieldCheck,
+  Sparkles,
+  Wallet,
+  X,
+  Zap,
+} from "lucide-react";
+import { ConnectWalletButton } from "@/features/wallet/components/ConnectWalletButton";
+import { navItems } from "@/config/navigation";
 
-export default function LandingPage() {
+function SocialIcon({ name }: { name: "x" | "telegram" | "farcaster" }) {
+  if (name === "telegram") {
+    return (
+      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
+        <path d="M21.9 4.1 18.7 19c-.2 1-.8 1.2-1.6.8l-4.5-3.3-2.2 2.1c-.2.2-.4.4-.9.4l.3-4.6 8.4-7.6c.4-.3-.1-.5-.6-.2L7.2 13.2 2.8 11.8c-1-.3-1-1 0-1.4L20 3.8c.8-.3 1.5.2 1.9.3Z" />
+      </svg>
+    );
+  }
+
+  if (name === "farcaster") {
+    return (
+      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
+        <path d="M6 3h12v18h-3v-5.2h-.03c-.33-1.9-1.5-2.85-2.97-2.85s-2.64.95-2.97 2.85H9V21H6V3Zm3 3v5.6c.78-.9 1.78-1.35 3-1.35s2.22.45 3 1.35V6H9Zm-5 4h2v7H4v-7Zm14 0h2v7h-2v-7Z" />
+      </svg>
+    );
+  }
+
   return (
-    <main className="min-h-screen bg-[#07080b] text-white">
-      <section className="mx-auto flex min-h-screen max-w-7xl flex-col px-6 py-8">
-        <nav className="flex items-center justify-between">
-          <div>
-            <p className="text-2xl font-semibold">GerotPay</p>
-            <p className="text-xs text-emerald-300">Sepolia testnet platform</p>
-          </div>
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
+      <path d="m14.2 10.2 7.3-8.5h-1.7l-6.4 7.4-5.1-7.4H2.5l7.7 11.2-7.7 9h1.7l6.8-7.9 5.5 7.9h5.8l-8.1-11.7Zm-2.4 2.8-.8-1.1-6.2-8.8h2.7l5 7.1.8 1.1 6.5 9.2h-2.7l-5.3-7.5Z" />
+    </svg>
+  );
+}
 
-          <div className="flex gap-3">
-            <Link href="/login" className="rounded-full border border-white/10 px-5 py-2 text-sm text-zinc-300">
-              Login
-            </Link>
-            <Link href="/signup" className="rounded-full bg-emerald-400 px-5 py-2 text-sm font-medium text-black">
-              Sign Up
-            </Link>
-          </div>
-        </nav>
+function PremiumCardPreview() {
+  return (
+    <div className="relative mx-auto w-full max-w-[520px]">
+      <div className="absolute -left-10 -top-10 h-48 w-48 rounded-full bg-emerald-400/20 blur-3xl" />
+      <div className="absolute -bottom-10 -right-10 h-48 w-48 rounded-full bg-cyan-400/20 blur-3xl" />
 
-        <div className="grid flex-1 items-center gap-12 py-20 lg:grid-cols-2">
-          <div>
-            <div className="mb-6 inline-flex rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-2 text-sm text-emerald-300">
-              Crypto card access powered by Sepolia ETH
+      <div className="relative rotate-[-4deg] rounded-[2rem] border border-white/15 bg-gradient-to-br from-zinc-950 via-emerald-950/80 to-black p-6 shadow-2xl shadow-emerald-950/40">
+        <div className="absolute inset-0 rounded-[2rem] bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.20),transparent_20%),radial-gradient(circle_at_80%_10%,rgba(16,185,129,0.35),transparent_25%),radial-gradient(circle_at_70%_85%,rgba(34,211,238,0.22),transparent_30%)]" />
+
+        <div className="relative">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-xl font-semibold tracking-tight">GerotPay</p>
+              <p className="text-xs uppercase tracking-[0.35em] text-emerald-300">
+                Premium
+              </p>
             </div>
 
-            <h1 className="max-w-3xl text-5xl font-semibold tracking-tight md:text-7xl">
-              Buy, reload, and manage cards with crypto.
-            </h1>
-
-            <p className="mt-6 max-w-xl text-lg text-zinc-400">
-              GerotPay lets users purchase virtual or physical test cards, receive access through Telegram, and manage reloads and withdrawals through smart contracts.
-            </p>
-
-            <div className="mt-8 flex gap-4">
-              <Link href="/signup" className="rounded-full bg-emerald-400 px-6 py-3 font-medium text-black">
-                Get Started
-              </Link>
-              <Link href="/dashboard" className="rounded-full border border-white/10 px-6 py-3 text-zinc-300">
-                View Demo
-              </Link>
+            <div className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs">
+              GP CARD
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 shadow-2xl">
-            <div className="rounded-[1.5rem] border border-white/10 bg-gradient-to-br from-emerald-400/20 via-cyan-400/10 to-violet-500/20 p-6">
-              <div className="flex justify-between">
-                <p className="text-lg font-semibold">GerotPay</p>
-                <p className="rounded-full bg-white/10 px-3 py-1 text-xs">Virtual</p>
-              </div>
+          <div className="mt-10 h-11 w-14 rounded-lg border border-yellow-200/40 bg-gradient-to-br from-yellow-200 via-yellow-500 to-yellow-800 shadow-lg" />
 
-              <div className="mt-20">
-                <p className="text-sm text-zinc-400">Card Balance</p>
-                <p className="mt-2 text-4xl font-semibold">0.0001 ETH</p>
-              </div>
+          <div className="mt-8 text-2xl tracking-[0.35em] text-zinc-100">
+            4892  ••••  ••••  0928
+          </div>
 
-              <div className="mt-10 grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-zinc-500">Holder</p>
-                  <p>Telegram User</p>
-                </div>
-                <div>
-                  <p className="text-zinc-500">Network</p>
-                  <p>Sepolia</p>
-                </div>
-              </div>
+          <div className="mt-8 flex items-end justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
+                Card Holder
+              </p>
+              <p className="mt-1 font-medium">Wallet User</p>
+            </div>
+
+            <div>
+              <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
+                Valid
+              </p>
+              <p className="mt-1 font-medium">12/30</p>
+            </div>
+
+            <div className="text-right">
+              <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
+                Type
+              </p>
+              <p className="mt-1 font-medium">Virtual</p>
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="relative ml-auto mt-[-55px] w-[82%] rotate-[5deg] rounded-[2rem] border border-white/15 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black p-6 shadow-2xl">
+        <div className="mb-5 h-10 rounded-md bg-zinc-800" />
+
+        <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
+          <div className="flex justify-between text-sm">
+            <span className="text-zinc-500">Bonus Balance</span>
+            <span className="text-amber-300">Locked</span>
+          </div>
+
+          <p className="mt-2 text-3xl font-semibold">$5.00</p>
+
+          <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
+            <div className="h-full w-2/3 rounded-full bg-emerald-400" />
+          </div>
+
+          <p className="mt-3 text-xs text-zinc-400">
+            Reload $1 to activate your promo balance.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function HomePage() {
+  const { isConnected, address } = useAccount();
+  const [open, setOpen] = useState(false);
+
+  const shortAddress = address
+    ? `${address.slice(0, 6)}...${address.slice(-4)}`
+    : "";
+
+  return (
+    <main className="min-h-screen bg-[#05060a] text-white">
+      <section className="mx-auto max-w-7xl px-6 py-8">
+        <nav className="flex items-center justify-between">
+          <Link href="/">
+            <p className="text-2xl font-semibold">GerotPay</p>
+            <p className="text-xs text-emerald-300">
+              Crypto cards powered by wallets
+            </p>
+          </Link>
+
+          <div className="flex items-center gap-3">
+            <ConnectWalletButton />
+
+            {isConnected && (
+              <button
+                onClick={() => setOpen(true)}
+                className="rounded-2xl border border-white/10 bg-white/[0.04] p-3"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+            )}
+          </div>
+        </nav>
+
+        {open && isConnected && (
+          <div className="fixed inset-0 z-50">
+            <button
+              className="absolute inset-0 bg-black/70"
+              onClick={() => setOpen(false)}
+            />
+
+            <aside className="absolute right-0 top-0 h-full w-80 border-l border-white/10 bg-[#08090d] p-6">
+              <div className="mb-8 flex items-center justify-between">
+                <div>
+                  <p className="text-xl font-semibold">GerotPay Menu</p>
+                  <p className="text-xs text-emerald-300">{shortAddress}</p>
+                </div>
+
+                <button
+                  onClick={() => setOpen(false)}
+                  className="rounded-xl border border-white/10 p-2"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <nav className="space-y-2">
+                {navItems
+                  .filter((item) => item.href !== "/")
+                  .map((item) => {
+                    const Icon = item.icon;
+
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setOpen(false)}
+                        className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm text-zinc-300 hover:bg-white/10"
+                      >
+                        <Icon className="h-4 w-4" />
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+              </nav>
+            </aside>
+          </div>
+        )}
+
+        <div className="grid min-h-[82vh] items-center gap-16 py-20 lg:grid-cols-2">
+          <div>
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-2 text-sm text-emerald-300">
+              <Sparkles className="h-4 w-4" />
+              Wallet-connected crypto card platform
+            </div>
+
+            <h1 className="text-5xl font-semibold tracking-tight md:text-7xl">
+              Spend, reload and manage crypto cards from one premium wallet app.
+            </h1>
+
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-zinc-400">
+              GerotPay lets users connect their wallet, purchase Virtual or
+              Physical cards, apply coupon discounts, earn GP token rewards,
+              unlock bonus balances, track card transactions and manage reloads
+              from a secure Web3 dashboard.
+            </p>
+
+            <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+              <Link
+                href="/marketplace"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-400 px-6 py-3 font-semibold text-black"
+              >
+                Explore Cards <ArrowRight className="h-4 w-4" />
+              </Link>
+
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center justify-center rounded-full border border-white/10 px-6 py-3 text-zinc-300"
+              >
+                Open Dashboard
+              </Link>
+            </div>
+
+            <div className="mt-10 grid gap-3 sm:grid-cols-3">
+              {[
+                ["Virtual Card", "$1 initial price"],
+                ["Physical Card", "$2 initial price"],
+                ["GP Rewards", "10 / 100 GP"],
+              ].map(([title, value]) => (
+                <div
+                  key={title}
+                  className="rounded-2xl border border-white/10 bg-white/[0.04] p-4"
+                >
+                  <p className="text-sm text-zinc-500">{title}</p>
+                  <p className="mt-1 font-semibold">{value}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <PremiumCardPreview />
+        </div>
+
+        <section className="grid gap-5 py-16 md:grid-cols-3">
+          {[
+            {
+              icon: Wallet,
+              title: "Wallet-only access",
+              text: "No email login, no signup form and no password system. Users enter the platform by connecting their wallet.",
+            },
+            {
+              icon: CreditCard,
+              title: "Virtual & Physical cards",
+              text: "Users can purchase either a Virtual Card or Physical Card from the marketplace and manage each card separately.",
+            },
+            {
+              icon: BadgeCheck,
+              title: "On-chain coupon logic",
+              text: "Coupons can be controlled by the owner and applied during purchase to reduce the final card price.",
+            },
+          ].map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <div
+                key={item.title}
+                className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6"
+              >
+                <Icon className="mb-5 h-7 w-7 text-emerald-300" />
+                <h3 className="text-xl font-semibold">{item.title}</h3>
+                <p className="mt-3 leading-7 text-zinc-400">{item.text}</p>
+              </div>
+            );
+          })}
+        </section>
+
+        <section className="grid gap-6 rounded-[2.5rem] border border-white/10 bg-white/[0.035] p-6 md:grid-cols-2 lg:p-10">
+          <div>
+            <p className="text-sm uppercase tracking-[0.3em] text-emerald-300">
+              Bonus Balance
+            </p>
+            <h2 className="mt-4 text-4xl font-semibold">
+              Promo balance that unlocks after first reload.
+            </h2>
+            <p className="mt-5 leading-8 text-zinc-400">
+              Virtual Card users receive a displayed $5 bonus balance. Physical
+              Card users receive a displayed $15 bonus balance. The bonus starts
+              locked and becomes active only after the required first reload.
+            </p>
+          </div>
+
+          <div className="grid gap-4">
+            <div className="rounded-3xl border border-white/10 bg-black/30 p-5">
+              <div className="flex items-center justify-between">
+                <p className="font-semibold">Virtual Card Bonus</p>
+                <Lock className="h-5 w-5 text-amber-300" />
+              </div>
+              <p className="mt-3 text-3xl font-semibold">$5 Locked</p>
+              <p className="mt-2 text-sm text-zinc-400">
+                Unlock after reloading $1.
+              </p>
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-black/30 p-5">
+              <div className="flex items-center justify-between">
+                <p className="font-semibold">Physical Card Bonus</p>
+                <Lock className="h-5 w-5 text-amber-300" />
+              </div>
+              <p className="mt-3 text-3xl font-semibold">$15 Locked</p>
+              <p className="mt-2 text-sm text-zinc-400">
+                Unlock after reloading $2.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="grid gap-5 py-16 md:grid-cols-4">
+          {[
+            {
+              icon: RefreshCw,
+              title: "Reload",
+              text: "Add supported tokens to card balance.",
+            },
+            {
+              icon: Zap,
+              title: "Withdraw",
+              text: "Withdraw available card funds when needed.",
+            },
+            {
+              icon: Gift,
+              title: "Referrals",
+              text: "Invite users and earn GP token rewards.",
+            },
+            {
+              icon: ShieldCheck,
+              title: "Secure activity",
+              text: "Track all purchases, reloads and withdrawals.",
+            },
+          ].map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <div
+                key={item.title}
+                className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6"
+              >
+                <Icon className="mb-5 h-6 w-6 text-emerald-300" />
+                <h3 className="font-semibold">{item.title}</h3>
+                <p className="mt-3 text-sm leading-6 text-zinc-400">
+                  {item.text}
+                </p>
+              </div>
+            );
+          })}
+        </section>
+
+        <section className="rounded-[2.5rem] border border-emerald-400/20 bg-gradient-to-br from-emerald-400/10 via-white/[0.035] to-cyan-400/10 p-8 text-center lg:p-12">
+          <p className="text-sm uppercase tracking-[0.3em] text-emerald-300">
+            Marketplace Ready
+          </p>
+          <h2 className="mt-4 text-4xl font-semibold">
+            Purchase cards, apply coupons and earn GP rewards.
+          </h2>
+          <p className="mx-auto mt-5 max-w-2xl leading-8 text-zinc-400">
+            The marketplace will support optional coupon codes during checkout,
+            owner-managed prices, token rewards and configurable payment tokens.
+          </p>
+
+          <Link
+            href="/marketplace"
+            className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 font-semibold text-black"
+          >
+            Go to Marketplace <ArrowRight className="h-4 w-4" />
+          </Link>
+        </section>
+
+        <footer className="mt-16 flex flex-col gap-4 border-t border-white/10 py-6 text-sm text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
+          <p>© {new Date().getFullYear()} GerotPay. All rights reserved.</p>
+
+          <div className="flex gap-3 text-zinc-300">
+            <Link href="#" className="rounded-full border border-white/10 p-3">
+              <SocialIcon name="x" />
+            </Link>
+
+            <Link href="#" className="rounded-full border border-white/10 p-3">
+              <SocialIcon name="telegram" />
+            </Link>
+
+            <Link href="#" className="rounded-full border border-white/10 p-3">
+              <SocialIcon name="farcaster" />
+            </Link>
+          </div>
+        </footer>
       </section>
     </main>
   );
