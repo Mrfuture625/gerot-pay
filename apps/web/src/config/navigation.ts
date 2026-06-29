@@ -21,4 +21,9 @@ export const navItems = [
   { label: "Withdraw", href: "/withdraw", icon: Upload },
   { label: "Referral", href: "/referrals", icon: Gift },
   {label: "Support", href: "/support", icon: Headphones },
+  {
+  label: "Claim",
+  href: "/claim",
+  icon: Gift,
+},
  ];

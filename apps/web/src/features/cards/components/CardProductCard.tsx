@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { waitForTransactionReceipt } from "@wagmi/core";
 import { useAccount } from "wagmi";
+import { config } from "@/features/wallet/providers/WalletProvider";
 import { BadgePercent, Check, Gift, Lock, ShoppingBag, X } from "lucide-react";
 import { GerotCard } from "@/features/cards/components/GerotCard";
 import { ConnectWalletButton } from "@/features/wallet/components/ConnectWalletButton";
@@ -14,13 +16,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { PLATFORM } from "@/config/platform";
-import {
-  calculateDiscountedPrice,
-  validateCoupon,
-  type CouponResult,
-} from "@/server/coupons/couponService";
+import { validateCoupon, type CouponResult } from "@/server/coupons/couponService";
 import { getCardPurchaseReward } from "@/server/rewards/rewardService";
+import {
+  approveStableToken,
+  buyCardOnchain,
+  getEthAmountForUsd,
+  getFinalCardPriceUsd,
+  getStableAmountForUsd,
+  getUsdcToken,
+  getUsdtToken,
+} from "@/lib/services/marketplaceService";
 
 type CardProductCardProps = {
   id: string;
@@ -31,6 +37,18 @@ type CardProductCardProps = {
   description: string | null;
 };
 
+type PaymentChoice = "eth" | "usdc" | "usdt";
+
+const CARD_TYPE_VALUE = {
+  virtual: 0,
+  physical: 1,
+} as const;
+
+const PAYMENT_TOKEN_VALUE = {
+  eth: 0,
+  usdc: 1,
+  usdt: 2,
+} as const;
 
 export function CardProductCard({
   name,
@@ -100,11 +118,12 @@ function PurchaseModal({
 }) {
   const isPhysical = cardType === "physical";
 
+  const [paymentChoice, setPaymentChoice] = useState<PaymentChoice>("eth");
   const [couponCode, setCouponCode] = useState("");
   const [couponError, setCouponError] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<
-  null | Extract<CouponResult, { valid: true }>
->(null);
+    null | Extract<CouponResult, { valid: true }>
+  >(null);
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -116,27 +135,27 @@ function PurchaseModal({
   const [country, setCountry] = useState("");
   const [phone, setPhone] = useState("");
 
-  const finalPrice = useMemo(() => {
-  if (!appliedCoupon) return price;
+  const [isPurchasing, setIsPurchasing] = useState(false);
 
-  return calculateDiscountedPrice({
-    price,
-    discountPercent: appliedCoupon.discountPercent,
-  });
-}, [price, appliedCoupon]);
+  const finalPrice = useMemo(() => {
+    if (!appliedCoupon) return price;
+
+    const discount = (price * appliedCoupon.discountPercent) / 100;
+    return price - discount;
+  }, [price, appliedCoupon]);
 
   function applyCoupon() {
-  const result = validateCoupon(couponCode);
+    const result = validateCoupon(couponCode);
 
-  if (!result.valid) {
-    setCouponError(result.error);
-    setAppliedCoupon(null);
-    return;
+    if (!result.valid) {
+      setCouponError(result.error);
+      setAppliedCoupon(null);
+      return;
+    }
+
+    setAppliedCoupon(result);
+    setCouponError("");
   }
-
-  setAppliedCoupon(result);
-  setCouponError("");
-}
 
   function removeCoupon() {
     setCouponCode("");
@@ -144,7 +163,7 @@ function PurchaseModal({
     setAppliedCoupon(null);
   }
 
-  function handlePurchase() {
+  async function handlePurchase() {
     if (!fullName.trim() || !email.trim()) {
       alert("Please enter your name and email.");
       return;
@@ -164,13 +183,64 @@ function PurchaseModal({
       }
     }
 
-    alert("Details saved. Smart contract purchase will be connected later.");
+    setIsPurchasing(true);
+
+    try {
+      const cardTypeValue = CARD_TYPE_VALUE[cardType];
+      const paymentTokenValue = PAYMENT_TOKEN_VALUE[paymentChoice];
+      const coupon = appliedCoupon ? couponCode.trim() : "";
+
+      const finalPriceUsd = await getFinalCardPriceUsd(cardTypeValue, coupon);
+
+      if (paymentChoice === "eth") {
+        const ethValue = await getEthAmountForUsd(finalPriceUsd as bigint);
+
+        const hash = await buyCardOnchain({
+          cardType: cardTypeValue,
+          paymentToken: paymentTokenValue,
+          couponCode: coupon,
+          ethValue: ethValue as bigint,
+        });
+
+        await waitForTransactionReceipt(config, { hash });
+
+        alert("Card purchase successful.");
+        return;
+      }
+
+      const stableAmount = getStableAmountForUsd(finalPriceUsd as bigint);
+
+      const stableToken =
+        paymentChoice === "usdc" ? await getUsdcToken() : await getUsdtToken();
+
+      const approvalHash = await approveStableToken(
+        stableToken as `0x${string}`,
+        stableAmount,
+      );
+
+      await waitForTransactionReceipt(config, { hash: approvalHash });
+
+      const purchaseHash = await buyCardOnchain({
+        cardType: cardTypeValue,
+        paymentToken: paymentTokenValue,
+        couponCode: coupon,
+      });
+
+      await waitForTransactionReceipt(config, { hash: purchaseHash });
+
+      alert("Card purchase successful.");
+    } catch (error) {
+      console.error(error);
+      alert("Purchase failed or rejected.");
+    } finally {
+      setIsPurchasing(false);
+    }
   }
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <button className="w-full rounded-2xl bg-emerald-400 px-5 py-3 sm:w-auto font-semibold text-black transition hover:bg-emerald-300">
+        <button className="w-full rounded-2xl bg-emerald-400 px-5 py-3 font-semibold text-black transition hover:bg-emerald-300 sm:w-auto">
           Purchase
         </button>
       </DialogTrigger>
@@ -189,20 +259,8 @@ function PurchaseModal({
             <p className="mb-4 font-semibold">Your Details</p>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <Input
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Full Name"
-                className="border-white/10 bg-black/30"
-              />
-
-              <Input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email Address"
-                type="email"
-                className="border-white/10 bg-black/30"
-              />
+              <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Full Name" className="border-white/10 bg-black/30" />
+              <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email Address" type="email" className="border-white/10 bg-black/30" />
             </div>
 
             {isPhysical && (
@@ -212,54 +270,40 @@ function PurchaseModal({
                 </p>
 
                 <div className="grid gap-3">
-                  <Input
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder="Street Address"
-                    className="border-white/10 bg-black/30"
-                  />
-
+                  <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street Address" className="border-white/10 bg-black/30" />
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <Input
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      placeholder="City"
-                      className="border-white/10 bg-black/30"
-                    />
-
-                    <Input
-                      value={stateName}
-                      onChange={(e) => setStateName(e.target.value)}
-                      placeholder="State / Region"
-                      className="border-white/10 bg-black/30"
-                    />
+                    <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="City" className="border-white/10 bg-black/30" />
+                    <Input value={stateName} onChange={(e) => setStateName(e.target.value)} placeholder="State / Region" className="border-white/10 bg-black/30" />
                   </div>
-
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <Input
-                      value={postalCode}
-                      onChange={(e) => setPostalCode(e.target.value)}
-                      placeholder="Postal / ZIP Code"
-                      className="border-white/10 bg-black/30"
-                    />
-
-                    <Input
-                      value={country}
-                      onChange={(e) => setCountry(e.target.value)}
-                      placeholder="Country"
-                      className="border-white/10 bg-black/30"
-                    />
+                    <Input value={postalCode} onChange={(e) => setPostalCode(e.target.value)} placeholder="Postal / ZIP Code" className="border-white/10 bg-black/30" />
+                    <Input value={country} onChange={(e) => setCountry(e.target.value)} placeholder="Country" className="border-white/10 bg-black/30" />
                   </div>
-
-                  <Input
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="Phone Number"
-                    className="border-white/10 bg-black/30"
-                  />
+                  <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone Number" className="border-white/10 bg-black/30" />
                 </div>
               </div>
             )}
+          </div>
+
+          <div className="mt-5 rounded-3xl border border-white/10 bg-white/[0.04] p-5">
+            <p className="mb-3 font-semibold">Payment Token</p>
+
+            <div className="grid gap-2 sm:grid-cols-3">
+              {(["eth", "usdc", "usdt"] as PaymentChoice[]).map((token) => (
+                <button
+                  key={token}
+                  type="button"
+                  onClick={() => setPaymentChoice(token)}
+                  className={`rounded-2xl border px-4 py-3 text-sm font-semibold uppercase transition ${
+                    paymentChoice === token
+                      ? "border-emerald-400/40 bg-emerald-400/10 text-emerald-300"
+                      : "border-white/10 text-zinc-400 hover:bg-white/10"
+                  }`}
+                >
+                  {token}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="mt-5 rounded-3xl border border-white/10 bg-white/[0.04] p-5">
@@ -269,25 +313,14 @@ function PurchaseModal({
             </div>
 
             <div className="flex flex-col gap-2 sm:flex-row">
-              <Input
-                value={couponCode}
-                onChange={(event) => setCouponCode(event.target.value)}
-                placeholder="WELCOME50"
-                className="border-white/10 bg-black/30"
-              />
+              <Input value={couponCode} onChange={(event) => setCouponCode(event.target.value)} placeholder="WELCOME50" className="border-white/10 bg-black/30" />
 
-              <Button
-                type="button"
-                onClick={applyCoupon}
-                className="bg-emerald-400 text-black hover:bg-emerald-300"
-              >
+              <Button type="button" onClick={applyCoupon} className="bg-emerald-400 text-black hover:bg-emerald-300">
                 Apply
               </Button>
             </div>
 
-            {couponError && (
-              <p className="mt-3 text-sm text-red-300">{couponError}</p>
-            )}
+            {couponError && <p className="mt-3 text-sm text-red-300">{couponError}</p>}
 
             {appliedCoupon && (
               <div className="mt-4 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-4">
@@ -295,21 +328,12 @@ function PurchaseModal({
                   <div>
                     <div className="flex items-center gap-2">
                       <Check className="h-4 w-4 text-emerald-300" />
-                      <p className="font-semibold text-emerald-300">
-                        {appliedCoupon.name}
-                      </p>
+                      <p className="font-semibold text-emerald-300">{appliedCoupon.name}</p>
                     </div>
-
-                    <p className="mt-1 text-sm text-zinc-300">
-                      {appliedCoupon.details}
-                    </p>
+                    <p className="mt-1 text-sm text-zinc-300">{appliedCoupon.details}</p>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={removeCoupon}
-                    className="rounded-full border border-white/10 p-1 text-zinc-400 hover:text-white"
-                  >
+                  <button type="button" onClick={removeCoupon} className="rounded-full border border-white/10 p-1 text-zinc-400 hover:text-white">
                     <X className="h-4 w-4" />
                   </button>
                 </div>
@@ -320,7 +344,7 @@ function PurchaseModal({
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
               <Gift className="mb-3 h-5 w-5 text-emerald-300" />
-              <p className="font-semibold">{rewardAmount} GP</p>
+              <p className="font-semibold">{rewardAmount} KPAY</p>
               <p className="text-xs text-zinc-500">Reward</p>
             </div>
 
@@ -340,7 +364,7 @@ function PurchaseModal({
           <div className="mt-5 rounded-3xl border border-emerald-400/20 bg-emerald-400/10 p-5">
             <p className="text-sm text-emerald-300">Final Price</p>
             <p className="mt-1 text-4xl font-bold">
-              ${finalPrice.toFixed(2)} {PLATFORM.paymentToken}
+              ${finalPrice.toFixed(2)} {paymentChoice.toUpperCase()}
             </p>
           </div>
 
@@ -356,9 +380,10 @@ function PurchaseModal({
               <Button
                 type="button"
                 onClick={handlePurchase}
-                className="w-full bg-emerald-400 py-6 text-base font-semibold text-black hover:bg-emerald-300"
+                disabled={isPurchasing}
+                className="w-full bg-emerald-400 py-6 text-base font-semibold text-black hover:bg-emerald-300 disabled:opacity-60"
               >
-                Purchase Card
+                {isPurchasing ? "Processing..." : "Purchase Card"}
               </Button>
             )}
           </div>

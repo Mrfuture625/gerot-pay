@@ -1,7 +1,7 @@
 {
   "name": "bot",
   "version": "1.0.0",
-  "description": "GerotPay Telegram Bot",
+  "description": "KryptPay Telegram Bot",
   "type": "module",
   "scripts": {
     "dev": "tsx src/index.ts",

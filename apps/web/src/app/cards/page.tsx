@@ -1,20 +1,100 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { formatUnits } from "viem";
+import { useAccount } from "wagmi";
 import {
   ArrowRight,
   CreditCard,
-  Gift,
-  Lock,
   RefreshCw,
   ShieldCheck,
   Upload,
+  Wallet,
 } from "lucide-react";
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { GerotCard } from "@/features/cards/components/GerotCard";
-import { mockCards } from "@/mock/cards";
+import { ConnectWalletButton } from "@/features/wallet/components/ConnectWalletButton";
+import { getCard, getUserCardIds } from "@/lib/services/vaultService";
+
+type VaultCard = {
+  cardId: bigint;
+  owner: string;
+  cardType: number;
+  balanceUsd: bigint;
+  totalReloadedUsd: bigint;
+  totalWithdrawnUsd: bigint;
+  active: boolean;
+  frozen: boolean;
+  createdAt: bigint;
+  lastActivityAt: bigint;
+};
+
+function formatUsd(value: bigint) {
+  return Number(formatUnits(value, 18)).toLocaleString(undefined, {
+    maximumFractionDigits: 2,
+  });
+}
+
+function cardName(cardType: number) {
+  return cardType === 1 ? "Krypt Physical Card" : "Krypt Virtual Card";
+}
+
+function cardVariant(cardType: number): "virtual" | "physical" {
+  return cardType === 1 ? "physical" : "virtual";
+}
+
+function formatDate(timestamp: bigint) {
+  return new Date(Number(timestamp) * 1000).toLocaleString();
+}
 
 export default function MyCardsPage() {
+  const { address, isConnected } = useAccount();
+
+  const [cards, setCards] = useState<VaultCard[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const totalBalance = useMemo(
+    () => cards.reduce((sum, card) => sum + card.balanceUsd, 0n),
+    [cards],
+  );
+
+  const totalReloaded = useMemo(
+    () => cards.reduce((sum, card) => sum + card.totalReloadedUsd, 0n),
+    [cards],
+  );
+
+  const totalWithdrawn = useMemo(
+    () => cards.reduce((sum, card) => sum + card.totalWithdrawnUsd, 0n),
+    [cards],
+  );
+
+  async function loadCards() {
+    if (!address) return;
+
+    setLoading(true);
+
+    try {
+      const ids = (await getUserCardIds(address)) as bigint[];
+
+      const loadedCards = await Promise.all(
+        ids.map(async (id) => (await getCard(id)) as unknown as VaultCard),
+      );
+
+      setCards(loadedCards);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to load Vault cards.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadCards();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [address]);
+
   return (
     <DashboardShell title="My Cards" subtitle="Manage your KryptPay cards">
       <div className="space-y-6">
@@ -28,78 +108,127 @@ export default function MyCardsPage() {
           </h1>
 
           <p className="mt-4 max-w-2xl leading-7 text-zinc-400">
-            View card balances, bonus balance status, reload requirements and
-            card-specific activity from one premium card wallet.
+            View live Vault balances, reload history, withdrawal totals, and
+            card status directly from your deployed KryptPay Vault contract.
           </p>
         </section>
 
-        <section className="grid gap-6 xl:grid-cols-2">
-          {mockCards.map((card) => (
-            <div
-              key={card.id}
-              className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5"
-            >
-              <GerotCard variant={card.type} />
-
-              <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <div className="mb-2 flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
-                    <p className="text-sm text-emerald-300">{card.status}</p>
-                  </div>
-
-                  <h2 className="text-2xl font-semibold">{card.name}</h2>
-
-                  <p className="mt-2 text-sm text-zinc-400">
-                    {card.lastActivity}
-                  </p>
-                </div>
-
-                <Link
-                  href={`/cards/${card.id}`}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 px-4 py-3 text-sm text-emerald-300 hover:bg-white/10"
-                >
-                  View Details
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-
-              <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                <InfoBox
-                  icon={CreditCard}
-                  label="Balance"
-                  value={`$${card.balance.toFixed(2)}`}
-                />
-
-                <InfoBox icon={Gift} label="Bonus" value={`$${card.bonus} ${card.bonusStatus}`} />
-
-                <InfoBox
-                  icon={Lock}
-                  label="Unlock Reload"
-                  value={`$${card.unlockReload}`}
-                />
-              </div>
-
-              <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                <Link
-                  href="/reload"
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-400 px-5 py-4 font-semibold text-black hover:bg-emerald-300"
-                >
-                  <RefreshCw className="h-5 w-5" />
-                  Reload
-                </Link>
-
-                <Link
-                  href="/withdraw"
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 px-5 py-4 font-semibold text-zinc-300 hover:bg-white/10"
-                >
-                  <Upload className="h-5 w-5" />
-                  Withdraw
-                </Link>
+        {!isConnected ? (
+          <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
+            <div className="mb-4 flex items-center gap-3">
+              <Wallet className="h-6 w-6 text-emerald-300" />
+              <div>
+                <h2 className="text-xl font-semibold">Connect wallet</h2>
+                <p className="text-sm text-zinc-400">
+                  Connect your wallet to view your KryptPay cards.
+                </p>
               </div>
             </div>
-          ))}
-        </section>
+            <ConnectWalletButton />
+          </section>
+        ) : loading ? (
+          <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-10 text-center text-zinc-400">
+            Loading your Vault cards...
+          </section>
+        ) : cards.length === 0 ? (
+          <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-10 text-center text-zinc-400">
+            No Vault cards found for this wallet yet.
+          </section>
+        ) : (
+          <>
+            <section className="grid gap-4 md:grid-cols-4">
+              <StatBox label="Total Cards" value={String(cards.length)} />
+              <StatBox label="Total Balance" value={`$${formatUsd(totalBalance)}`} />
+              <StatBox label="Reloaded" value={`$${formatUsd(totalReloaded)}`} />
+              <StatBox label="Withdrawn" value={`$${formatUsd(totalWithdrawn)}`} />
+            </section>
+
+            <section className="grid gap-6 xl:grid-cols-2">
+              {cards.map((card) => (
+                <div
+                  key={card.cardId.toString()}
+                  className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5"
+                >
+                  <GerotCard variant={cardVariant(card.cardType)} />
+
+                  <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <div className="mb-2 flex items-center gap-2">
+                        <span
+                          className={`h-2.5 w-2.5 rounded-full ${
+                            card.frozen ? "bg-amber-400" : "bg-emerald-400"
+                          }`}
+                        />
+                        <p
+                          className={`text-sm ${
+                            card.frozen ? "text-amber-300" : "text-emerald-300"
+                          }`}
+                        >
+                          {card.frozen ? "Frozen" : "Active"}
+                        </p>
+                      </div>
+
+                      <h2 className="text-2xl font-semibold">
+                        {cardName(card.cardType)}
+                      </h2>
+
+                      <p className="mt-2 text-sm text-zinc-400">
+                        Card #{card.cardId.toString()} • Last activity:{" "}
+                        {formatDate(card.lastActivityAt)}
+                      </p>
+                    </div>
+
+                    <Link
+                      href={`/cards/${card.cardId.toString()}`}
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 px-4 py-3 text-sm text-emerald-300 hover:bg-white/10"
+                    >
+                      View Details
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </div>
+
+                  <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                    <InfoBox
+                      icon={CreditCard}
+                      label="Balance"
+                      value={`$${formatUsd(card.balanceUsd)}`}
+                    />
+
+                    <InfoBox
+                      icon={RefreshCw}
+                      label="Reloaded"
+                      value={`$${formatUsd(card.totalReloadedUsd)}`}
+                    />
+
+                    <InfoBox
+                      icon={Upload}
+                      label="Withdrawn"
+                      value={`$${formatUsd(card.totalWithdrawnUsd)}`}
+                    />
+                  </div>
+
+                  <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                    <Link
+                      href="/reload"
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-400 px-5 py-4 font-semibold text-black hover:bg-emerald-300"
+                    >
+                      <RefreshCw className="h-5 w-5" />
+                      Reload
+                    </Link>
+
+                    <Link
+                      href="/withdraw"
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 px-5 py-4 font-semibold text-zinc-300 hover:bg-white/10"
+                    >
+                      <Upload className="h-5 w-5" />
+                      Withdraw
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </section>
+          </>
+        )}
 
         <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
           <div className="flex items-start gap-4">
@@ -108,17 +237,25 @@ export default function MyCardsPage() {
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold">Card transaction rule</h3>
+              <h3 className="text-xl font-semibold">Live Vault cards</h3>
               <p className="mt-2 leading-7 text-zinc-400">
-                The main Activity page will show all wallet activity. Each card
-                details page will show only transactions related to that specific
-                card.
+                These cards are loaded directly from the KryptPay Vault contract.
+                Reload and withdraw actions update these balances on-chain.
               </p>
             </div>
           </div>
         </section>
       </div>
     </DashboardShell>
+  );
+}
+
+function StatBox({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
+      <p className="text-sm text-zinc-500">{label}</p>
+      <p className="mt-2 text-2xl font-semibold">{value}</p>
+    </div>
   );
 }
 

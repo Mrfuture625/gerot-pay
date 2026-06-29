@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { formatUnits } from "viem";
 import { useAccount } from "wagmi";
 import {
-  Activity,
   ArrowRight,
   Copy,
   CreditCard,
@@ -18,48 +19,114 @@ import { DashboardShell } from "@/components/layout/DashboardShell";
 import { GerotCard } from "@/features/cards/components/GerotCard";
 import { ConnectWalletButton } from "@/features/wallet/components/ConnectWalletButton";
 import { NetworkWarning } from "@/features/wallet/components/NetworkWarning";
+import { getCard, getUserCardIds } from "@/lib/services/vaultService";
+import {
+  getClaimableAmount,
+  getLockedAmount,
+  getTotalPendingAmount,
+} from "@/lib/services/rewardService";
+import { useDashboard } from "@/features/dashboard/hooks/useDashboard";
 
-const dashboardData = {
-  cards: 2,
-  rewards: 230,
-  bonusBalance: 20,
-  totalReloaded: 150,
+type VaultCard = {
+  cardId: bigint;
+  owner: string;
+  cardType: number;
+  balanceUsd: bigint;
+  totalReloadedUsd: bigint;
+  totalWithdrawnUsd: bigint;
+  active: boolean;
+  frozen: boolean;
+  createdAt: bigint;
+  lastActivityAt: bigint;
 };
-
-const recentActivity = [
-  {
-    title: "Virtual Card Purchased",
-    detail: "10 GP reward added",
-    time: "Today",
-    icon: CreditCard,
-  },
-  {
-    title: "Coupon Applied",
-    detail: "WELCOME50 discount used",
-    time: "Today",
-    icon: Gift,
-  },
-  {
-    title: "Card Reloaded",
-    detail: "$25 added to Virtual Card",
-    time: "Yesterday",
-    icon: RefreshCw,
-  },
-  {
-    title: "Referral Reward",
-    detail: "+10 GP from invited wallet",
-    time: "2 days ago",
-    icon: Gift,
-  },
-];
 
 function shortAddress(address?: `0x${string}`) {
   if (!address) return "";
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
+function formatUsd(value: bigint) {
+  return Number(formatUnits(value, 18)).toLocaleString(undefined, {
+    maximumFractionDigits: 2,
+  });
+}
+
+function formatKpay(value: bigint) {
+  return Number(formatUnits(value, 18)).toLocaleString(undefined, {
+    maximumFractionDigits: 2,
+  });
+}
+
+function cardName(cardType: number) {
+  return cardType === 1 ? "Physical Card" : "Virtual Card";
+}
+
+function cardVariant(cardType: number): "virtual" | "physical" {
+  return cardType === 1 ? "physical" : "virtual";
+}
+
 export default function DashboardPage() {
   const { address, isConnected } = useAccount();
+  
+
+  const [cards, setCards] = useState<VaultCard[]>([]);
+  const [pendingRewards, setPendingRewards] = useState<bigint>(0n);
+  const [claimableRewards, setClaimableRewards] = useState<bigint>(0n);
+  const [lockedRewards, setLockedRewards] = useState<bigint>(0n);
+  const [loading, setLoading] = useState(false);
+
+  const totalBalance = useMemo(
+    () => cards.reduce((sum, card) => sum + card.balanceUsd, 0n),
+    [cards],
+  );
+
+  const totalReloaded = useMemo(
+    () => cards.reduce((sum, card) => sum + card.totalReloadedUsd, 0n),
+    [cards],
+  );
+
+  const totalWithdrawn = useMemo(
+    () => cards.reduce((sum, card) => sum + card.totalWithdrawnUsd, 0n),
+    [cards],
+  );
+
+  const latestCards = cards.slice(0, 2);
+
+  async function loadDashboard() {
+    if (!address) return;
+
+    setLoading(true);
+
+    try {
+      const [ids, pending, claimable, locked] = await Promise.all([
+        getUserCardIds(address),
+        getTotalPendingAmount(address),
+        getClaimableAmount(address),
+        getLockedAmount(address),
+      ]);
+
+      const loadedCards = await Promise.all(
+        (ids as bigint[]).map(async (id) => {
+          return (await getCard(id)) as unknown as VaultCard;
+        }),
+      );
+
+      setCards(loadedCards);
+      setPendingRewards(pending as bigint);
+      setClaimableRewards(claimable as bigint);
+      setLockedRewards(locked as bigint);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to load dashboard data from contracts.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadDashboard();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [address]);
 
   async function copyWallet() {
     if (!address) return;
@@ -82,8 +149,8 @@ export default function DashboardPage() {
               </h1>
 
               <p className="mt-4 max-w-2xl leading-7 text-zinc-400">
-                Track cards, rewards, bonus balances, reloads, withdrawals and
-                recent activity from a clean wallet-connected fintech dashboard.
+                Track live Vault balances, KPAY rewards, reloads, withdrawals
+                and cards directly from your deployed smart contracts.
               </p>
 
               <div className="mt-6 rounded-3xl border border-white/10 bg-black/30 p-4">
@@ -127,33 +194,69 @@ export default function DashboardPage() {
 
         <NetworkWarning />
 
+        {isConnected && loading && (
+          <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5 text-zinc-400">
+            Loading live dashboard data...
+          </section>
+        )}
+
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <OverviewCard
             icon={CreditCard}
             label="Cards"
-            value={dashboardData.cards}
-            note="Virtual & Physical"
+            value={isConnected ? cards.length : 0}
+            note="Vault cards owned"
+          />
+
+          <OverviewCard
+            icon={Wallet}
+            label="Vault Balance"
+            value={`$${formatUsd(totalBalance)}`}
+            note="Across all cards"
           />
 
           <OverviewCard
             icon={Gift}
-            label="GP Rewards"
-            value={`${dashboardData.rewards} GP`}
-            note="Total earned"
+            label="Pending KPAY"
+            value={`${formatKpay(pendingRewards)} KPAY`}
+            note="Reward contract"
           />
 
           <OverviewCard
             icon={ShieldCheck}
-            label="Bonus Balance"
-            value={`$${dashboardData.bonusBalance}`}
-            note="Locked + active"
+            label="Claimable"
+            value={`${formatKpay(claimableRewards)} KPAY`}
+            note={`${formatKpay(lockedRewards)} KPAY locked`}
           />
+        </section>
 
+        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <OverviewCard
             icon={RefreshCw}
             label="Total Reloaded"
-            value={`$${dashboardData.totalReloaded}`}
-            note="Across all cards"
+            value={`$${formatUsd(totalReloaded)}`}
+            note="Lifetime reload volume"
+          />
+
+          <OverviewCard
+            icon={Upload}
+            label="Total Withdrawn"
+            value={`$${formatUsd(totalWithdrawn)}`}
+            note="Lifetime withdrawal volume"
+          />
+
+          <OverviewCard
+            icon={CreditCard}
+            label="Active Cards"
+            value={cards.filter((card) => !card.frozen && card.active).length}
+            note="Not frozen"
+          />
+
+          <OverviewCard
+            icon={ShieldCheck}
+            label="Frozen Cards"
+            value={cards.filter((card) => card.frozen).length}
+            note="Requires support"
           />
         </section>
 
@@ -191,10 +294,10 @@ export default function DashboardPage() {
               />
 
               <QuickAction
-                href="/referrals"
+                href="/claim"
                 icon={Gift}
-                title="Referral"
-                text="Earn GP"
+                title="Claim"
+                text="Claim KPAY"
               />
             </div>
           </div>
@@ -218,21 +321,29 @@ export default function DashboardPage() {
               </Link>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <UserCardSummary
-                type="Virtual Card"
-                balance="$34.20"
-                bonus="$5 Locked"
-                href="/cards"
-              />
-
-              <UserCardSummary
-                type="Physical Card"
-                balance="$102.50"
-                bonus="$15 Active"
-                href="/cards"
-              />
-            </div>
+            {!isConnected ? (
+              <div className="rounded-3xl border border-white/10 bg-black/25 p-5 text-zinc-400">
+                Connect your wallet to view cards.
+              </div>
+            ) : latestCards.length === 0 ? (
+              <div className="rounded-3xl border border-white/10 bg-black/25 p-5 text-zinc-400">
+                No Vault cards found yet.
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2">
+                {latestCards.map((card) => (
+                  <UserCardSummary
+                    key={card.cardId.toString()}
+                    cardId={card.cardId}
+                    type={cardName(card.cardType)}
+                    variant={cardVariant(card.cardType)}
+                    balance={`$${formatUsd(card.balanceUsd)}`}
+                    status={card.frozen ? "Frozen" : "Active"}
+                    href={`/cards/${card.cardId.toString()}`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
@@ -240,43 +351,25 @@ export default function DashboardPage() {
           <div className="mb-5 flex items-center justify-between">
             <div>
               <p className="text-sm uppercase tracking-[0.25em] text-emerald-300">
-                Recent Activity
+                Live Summary
               </p>
-              <h2 className="mt-2 text-2xl font-semibold">Latest updates</h2>
+              <h2 className="mt-2 text-2xl font-semibold">
+                Contract-backed account overview
+              </h2>
             </div>
 
             <Link
               href="/activity"
               className="text-sm text-emerald-300 hover:text-emerald-200"
             >
-              View all
+              View activity
             </Link>
           </div>
 
-          <div className="space-y-3">
-            {recentActivity.map((item) => {
-              const Icon = item.icon;
-
-              return (
-                <div
-                  key={item.title}
-                  className="flex items-center justify-between gap-4 rounded-3xl border border-white/10 bg-black/25 p-4"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-3">
-                      <Icon className="h-5 w-5 text-emerald-300" />
-                    </div>
-
-                    <div>
-                      <p className="font-semibold">{item.title}</p>
-                      <p className="text-sm text-zinc-500">{item.detail}</p>
-                    </div>
-                  </div>
-
-                  <p className="text-sm text-zinc-500">{item.time}</p>
-                </div>
-              );
-            })}
+          <div className="rounded-3xl border border-white/10 bg-black/25 p-5 text-sm leading-7 text-zinc-400">
+            This dashboard is now reading card balances from the KryptPay Vault
+            contract and KPAY reward balances from the Reward Claim contract.
+            The Activity page will be connected next to display on-chain events.
           </div>
         </section>
       </div>
@@ -341,28 +434,30 @@ function QuickAction({
 }
 
 function UserCardSummary({
+  cardId,
   type,
+  variant,
   balance,
-  bonus,
+  status,
   href,
 }: {
+  cardId: bigint;
   type: string;
+  variant: "virtual" | "physical";
   balance: string;
-  bonus: string;
+  status: string;
   href: string;
 }) {
   return (
     <div className="rounded-3xl border border-white/10 bg-black/25 p-4">
-      <GerotCard
-        variant={type.toLowerCase().includes("physical") ? "physical" : "virtual"}
-        className="rounded-[1.5rem]"
-      />
+      <GerotCard variant={variant} className="rounded-[1.5rem]" />
 
       <div className="mt-4 flex items-end justify-between">
         <div>
           <p className="font-semibold">{type}</p>
-          <p className="mt-1 text-sm text-zinc-500">Balance {balance}</p>
-          <p className="text-sm text-zinc-500">Bonus {bonus}</p>
+          <p className="mt-1 text-sm text-zinc-500">Card #{cardId.toString()}</p>
+          <p className="text-sm text-zinc-500">Balance {balance}</p>
+          <p className="text-sm text-zinc-500">Status {status}</p>
         </div>
 
         <Link
