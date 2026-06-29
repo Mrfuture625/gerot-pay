@@ -1,9 +1,10 @@
-import { KryptPay_PRODUCT_IDS } from "@/lib/contracts/gerotpay";
+export enum CardType {
+  Virtual = 0,
+  Physical = 1,
+}
 
-export function getProductIdFromCardType(cardType: string) {
-  if (cardType === "physical") {
-    return KryptPay_PRODUCT_IDS.physical;
-  }
-
-  return KryptPay_PRODUCT_IDS.virtual;
+export function getCardType(cardType: string): CardType {
+  return cardType === "physical"
+    ? CardType.Physical
+    : CardType.Virtual;
 }
