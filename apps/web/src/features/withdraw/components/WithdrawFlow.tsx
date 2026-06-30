@@ -6,7 +6,7 @@ import { waitForTransactionReceipt } from "@wagmi/core";
 import { useAccount } from "wagmi";
 import { Check, CreditCard, Download, Wallet } from "lucide-react";
 import { config } from "@/features/wallet/providers/WalletProvider";
-import { GerotCard } from "@/features/cards/components/GerotCard";
+import { KryptPayCard } from "@/features/cards/components/KryptPayCard";
 import { ConnectWalletButton } from "@/features/wallet/components/ConnectWalletButton";
 import {
   getCard,
@@ -14,6 +14,7 @@ import {
   getUserCardIds,
   withdrawFromCardOnchain,
 } from "@/lib/services/vaultService";
+import { appToast } from "@/lib/toast";
 
 type PaymentChoice = "eth" | "usdc" | "usdt";
 
@@ -43,7 +44,7 @@ function formatUsd(value: bigint) {
 }
 
 function cardName(cardType: number) {
-  return cardType === 1 ? "Krypt Physical Card" : "Krypt Virtual Card";
+  return cardType === 1 ? "KryptPay Physical Card" : "KryptPay Virtual Card";
 }
 
 function cardVariant(cardType: number): "virtual" | "physical" {
@@ -110,34 +111,36 @@ export function WithdrawFlow() {
       }
     } catch (error) {
       console.error(error);
-      alert("Failed to load Vault cards.");
+      appToast.error("Failed to load Vault cards.");
     } finally {
       setLoading(false);
     }
   }
 
-  useEffect(() => {
+  useEffect(() => { 
     loadCards();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [address]);
 
   async function handleWithdraw() {
     if (!selectedCard) {
-      alert("No Vault card found for this wallet.");
+    appToast.error("No Vault card found for this wallet.");
       return;
     }
 
     if (!amount || numericAmount <= 0) {
-      alert("Enter a valid withdrawal amount.");
+      appToast.error("Enter a valid withdrawal amount.");
       return;
     }
 
     if (amountUsd > selectedCard.balanceUsd) {
-      alert("Withdrawal amount exceeds selected card balance.");
+      appToast.error("Withdrawal amount exceeds selected card balance.");
       return;
     }
 
     setWithdrawing(true);
+
+    appToast.loading("Waiting for wallet confirmation...", "withdraw");
 
     try {
       const paymentToken = PAYMENT_TOKEN_VALUE[paymentChoice];
@@ -150,27 +153,29 @@ export function WithdrawFlow() {
 
       await waitForTransactionReceipt(config, { hash });
 
-      alert("Withdrawal successful.");
+      appToast.success("Withdrawal successful.", "withdraw");
       setAmount("");
       await loadCards();
     } catch (error) {
-      console.error(error);
-      alert(
-        "Withdraw failed or rejected. Make sure the Vault has enough ETH/USDC/USDT funded for payouts.",
-      );
-    } finally {
-      setWithdrawing(false);
-    }
-  }
+  console.error(error);
 
+  appToast.error(
+    "Withdraw failed or rejected. Make sure the Vault has enough ETH/USDC/USDT available for payouts.",
+    "withdraw",
+  );
+} finally {
+  setWithdrawing(false);
+}
+     
+  }
   async function previewEthAmount() {
     if (!amountUsd || paymentChoice !== "eth") return;
 
     try {
       const ethAmount = (await getEthAmountForReload(amountUsd)) as bigint;
-      alert(`You will receive approximately ${formatUnits(ethAmount, 18)} ETH.`);
+      appToast.info(`You will receive approximately ${formatUnits(ethAmount, 18)} ETH.`);
     } catch {
-      alert("Could not calculate ETH amount.");
+      appToast.error("Could not calculate ETH amount.");
     }
   }
 
@@ -241,7 +246,7 @@ export function WithdrawFlow() {
                             : "border-white/10 bg-black/25 hover:border-white/20"
                         }`}
                       >
-                        <GerotCard
+                        <KryptPayCard
                           variant={cardVariant(card.cardType)}
                           className="max-w-[280px] rounded-[1.5rem] sm:max-w-[360px]"
                         />

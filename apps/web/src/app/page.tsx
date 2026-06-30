@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import {
   ArrowRight,
@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { ConnectWalletButton } from "@/features/wallet/components/ConnectWalletButton";
 import { navItems } from "@/config/navigation";
+import { saveReferrer } from "@/features/referral/referralStorage";
 
 function SocialIcon({ name }: { name: "x" | "telegram" | "farcaster" }) {
   if (name === "telegram") {
@@ -125,6 +126,15 @@ function PremiumCardPreview() {
 export default function HomePage() {
   const { isConnected, address } = useAccount();
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const referrer = params.get("ref");
+
+  if (referrer) {
+    saveReferrer(referrer);
+  }
+}, []);
 
   const shortAddress = address
     ? `${address.slice(0, 6)}...${address.slice(-4)}`

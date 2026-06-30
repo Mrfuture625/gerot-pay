@@ -6,7 +6,7 @@ import { waitForTransactionReceipt } from "@wagmi/core";
 import { useAccount } from "wagmi";
 import { Check, CreditCard, RefreshCw, Wallet } from "lucide-react";
 import { config } from "@/features/wallet/providers/WalletProvider";
-import { GerotCard } from "@/features/cards/components/GerotCard";
+import { KryptPayCard } from "@/features/cards/components/KryptPayCard";
 import { ConnectWalletButton } from "@/features/wallet/components/ConnectWalletButton";
 import {
   approveVaultToken,
@@ -18,6 +18,7 @@ import {
   getVaultUsdtToken,
   reloadCardOnchain,
 } from "@/lib/services/vaultService";
+import { appToast } from "@/lib/toast";
 
 type PaymentChoice = "eth" | "usdc" | "usdt";
 
@@ -47,7 +48,7 @@ function formatUsd(value: bigint) {
 }
 
 function cardName(cardType: number) {
-  return cardType === 1 ? "Krypt Physical Card" : "Krypt Virtual Card";
+  return cardType === 1 ? "KryptPay Physical Card" : "KryptPay Virtual Card";
 }
 
 function cardVariant(cardType: number): "virtual" | "physical" {
@@ -93,7 +94,7 @@ export function ReloadFlow() {
       }
     } catch (error) {
       console.error(error);
-      alert("Failed to load Vault cards.");
+      appToast.error("Failed to load Vault cards.");
     } finally {
       setLoading(false);
     }
@@ -106,16 +107,18 @@ export function ReloadFlow() {
 
   async function handleReload() {
     if (!selectedCard) {
-      alert("No Vault card found for this wallet.");
+      appToast.error("No Vault card found for this wallet.");
       return;
     }
 
     if (!amount || numericAmount <= 0) {
-      alert("Enter a valid reload amount.");
+      appToast.error("Enter a valid reload amount.");
       return;
     }
 
     setReloading(true);
+
+    appToast.loading("Waiting for wallet confirmation...", "reload");
 
     try {
       const usdAmount = parseUnits(amount, 18);
@@ -152,12 +155,12 @@ export function ReloadFlow() {
         await waitForTransactionReceipt(config, { hash: reloadHash });
       }
 
-      alert("Reload successful.");
+      appToast.success("Reload successful.", "reload");
       setAmount("");
       await loadCards();
     } catch (error) {
       console.error(error);
-      alert("Reload failed or rejected.");
+    appToast.error("Reload failed or transaction was rejected.", "reload");
     } finally {
       setReloading(false);
     }
@@ -223,7 +226,7 @@ export function ReloadFlow() {
                           : "border-white/10 bg-black/25 hover:border-white/20"
                       }`}
                     >
-                      <GerotCard
+                      <KryptPayCard
                         variant={cardVariant(card.cardType)}
                         className="max-w-[280px] rounded-[1.5rem] sm:max-w-[360px]"
                       />

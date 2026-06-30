@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { AppAlert } from "@/components/app/AppAlert";
 import { useAccount } from "wagmi";
 import { ConnectWalletButton } from "@/features/wallet/components/ConnectWalletButton";
+import { appToast } from "@/lib/toast";
 
 type Props = {
   children: React.ReactNode;
@@ -114,7 +115,7 @@ export function PurchaseDialog({ children, product }: Props) {
 
   function handlePurchase() {
     if (!isConnected) {
-      showAlert("Please connect your wallet before purchasing.");
+      appToast.info("Please connect your wallet before purchasing.");
       return;
     }
 

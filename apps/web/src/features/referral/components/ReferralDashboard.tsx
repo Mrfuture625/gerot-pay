@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Copy,
   Gift,
@@ -10,27 +10,89 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
+import { formatUnits } from "viem";
+import { useAccount, useReadContracts } from "wagmi";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { StatusBadge } from "@/components/shared/StatusBadge";
-import type {
-  ReferralHistoryItem,
-  ReferralStats,
-} from "@/types/referral";
+import { REWARD_CLAIM_ABI } from "@/lib/contracts/reward";
+import { KRYPTPAY_CONTRACTS } from "@/lib/contracts/kryptpay";
 
-export function ReferralDashboard({
-  stats,
-  history,
-}: {
-  stats: ReferralStats;
-  history: ReferralHistoryItem[];
-}) {
+export function ReferralDashboard() {
+  const { address, isConnected } = useAccount();
   const [copied, setCopied] = useState(false);
 
-  async function copyReferralLink() {
-    await navigator.clipboard.writeText(stats.referralLink);
-    setCopied(true);
+  const rewardContract = {
+    address: KRYPTPAY_CONTRACTS.rewardClaim,
+    abi: REWARD_CLAIM_ABI,
+  } as const;
 
+  const { data, isLoading } = useReadContracts({
+    contracts: address
+      ? [
+          {
+            ...rewardContract,
+            functionName: "referralCount",
+            args: [address],
+          },
+          {
+            ...rewardContract,
+            functionName: "totalEarned",
+            args: [address],
+          },
+          {
+            ...rewardContract,
+            functionName: "getTotalPendingAmount",
+            args: [address],
+          },
+          {
+            ...rewardContract,
+            functionName: "referralRewardAmount",
+          },
+        ]
+      : [],
+    query: {
+      enabled: Boolean(address),
+    },
+  });
+
+  const friendsJoined = data?.[0]?.result ? Number(data[0].result) : 0;
+  const totalEarned = data?.[1]?.result ? formatUnits(data[1].result, 18) : "0";
+  const pendingRewards = data?.[2]?.result
+    ? formatUnits(data[2].result, 18)
+    : "0";
+  const referralReward = data?.[3]?.result
+    ? formatUnits(data[3].result, 18)
+    : "0";
+
+  const referralCode = useMemo(() => {
+    if (!address) return "CONNECT-WALLET";
+    return `KPAY-${address.slice(2, 8).toUpperCase()}`;
+  }, [address]);
+
+  const referralLink = useMemo(() => {
+    if (typeof window === "undefined") return "";
+    return `${window.location.origin}/?ref=${address}`;
+  }, [referralCode]);
+
+  async function copyReferralLink() {
+    if (!isConnected || !referralLink) return;
+
+    await navigator.clipboard.writeText(referralLink);
+    setCopied(true);
     setTimeout(() => setCopied(false), 1500);
+  }
+
+  async function shareReferralLink() {
+    if (!isConnected || !referralLink) return;
+
+    if (navigator.share) {
+      await navigator.share({
+        title: "Join KryptPay",
+        text: "Use my KryptPay referral link.",
+        url: referralLink,
+      });
+    } else {
+      await copyReferralLink();
+    }
   }
 
   return (
@@ -38,20 +100,34 @@ export function ReferralDashboard({
       <PageHeader
         eyebrow="Referral"
         title="Invite friends and earn GP rewards."
-        description="Share your KryptPay referral link. When someone connects their wallet through your link, you earn GP rewards and they receive a joining bonus."
+        description="Share your KryptPay referral link. Referral rewards are read directly from the reward contract."
       />
 
+      {!isConnected && (
+        <div className="rounded-3xl border border-yellow-400/20 bg-yellow-400/10 p-5 text-sm text-yellow-200">
+          Connect your wallet to view your real referral rewards.
+        </div>
+      )}
+
       <section className="grid gap-4 md:grid-cols-3">
-        <StatCard icon={Users} label="Friends Joined" value={stats.friendsJoined} />
-        <StatCard icon={Gift} label="GP Earned" value={`${stats.gpEarned} GP`} />
+        <StatCard
+          icon={Users}
+          label="Friends Joined"
+          value={isLoading ? "Loading..." : friendsJoined}
+        />
+        <StatCard
+          icon={Gift}
+          label="Total GP Earned"
+          value={isLoading ? "Loading..." : `${Number(totalEarned).toLocaleString()} GP`}
+        />
         <StatCard
           icon={Wallet}
           label="Pending Rewards"
-          value={`${stats.pendingRewards} GP`}
+          value={isLoading ? "Loading..." : `${Number(pendingRewards).toLocaleString()} GP`}
         />
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+      <section className="grid gap-6">
         <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
           <div className="mb-5 flex items-center gap-3">
             <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-3">
@@ -61,7 +137,7 @@ export function ReferralDashboard({
             <div>
               <h2 className="text-2xl font-semibold">Your Referral Link</h2>
               <p className="text-sm text-zinc-400">
-                Share this link with new users.
+                Current reward per referral: {Number(referralReward).toLocaleString()} GP
               </p>
             </div>
           </div>
@@ -71,7 +147,7 @@ export function ReferralDashboard({
               Referral Code
             </p>
             <p className="mt-2 text-2xl font-semibold text-emerald-300">
-              {stats.referralCode}
+              {referralCode}
             </p>
           </div>
 
@@ -80,22 +156,24 @@ export function ReferralDashboard({
               Referral Link
             </p>
             <p className="mt-2 break-all text-sm text-zinc-300">
-              {stats.referralLink}
+              {isConnected ? referralLink : "Connect wallet to generate link"}
             </p>
           </div>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <button
               onClick={copyReferralLink}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-400 px-5 py-4 font-semibold text-black hover:bg-emerald-300"
+              disabled={!isConnected}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-400 px-5 py-4 font-semibold text-black hover:bg-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Copy className="h-5 w-5" />
               {copied ? "Copied" : "Copy Link"}
             </button>
 
             <button
-              onClick={() => alert("Share feature will be connected later.")}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 px-5 py-4 font-semibold text-zinc-300 hover:bg-white/10"
+              onClick={shareReferralLink}
+              disabled={!isConnected}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 px-5 py-4 font-semibold text-zinc-300 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Share2 className="h-5 w-5" />
               Share
@@ -103,39 +181,7 @@ export function ReferralDashboard({
           </div>
         </div>
 
-        <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
-          <div className="mb-5 flex items-center gap-3">
-            <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 p-3">
-              <QrCode className="h-5 w-5 text-cyan-300" />
-            </div>
-
-            <div>
-              <h2 className="text-2xl font-semibold">Referral QR</h2>
-              <p className="text-sm text-zinc-400">
-                QR placeholder for mobile sharing.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex aspect-square items-center justify-center rounded-[2rem] border border-white/10 bg-black/30">
-            <div className="grid h-44 w-44 grid-cols-5 gap-2 rounded-2xl bg-white p-4">
-              {Array.from({ length: 25 }).map((_, index) => (
-                <div
-                  key={index}
-                  className={`rounded-sm ${
-                    index % 2 === 0 || index % 7 === 0
-                      ? "bg-black"
-                      : "bg-zinc-200"
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-
-          <p className="mt-4 text-center text-sm text-zinc-500">
-            Real QR generation will be connected later.
-          </p>
-        </div>
+        
       </section>
 
       <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
@@ -146,31 +192,9 @@ export function ReferralDashboard({
           <h2 className="mt-2 text-2xl font-semibold">Recent invited wallets</h2>
         </div>
 
-        <div className="space-y-3">
-          {history.map((item) => (
-            <div
-              key={item.id}
-              className="flex flex-col gap-4 rounded-3xl border border-white/10 bg-black/25 p-4 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div className="flex items-center gap-3">
-                <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-3">
-                  <Wallet className="h-5 w-5 text-emerald-300" />
-                </div>
-
-                <div>
-                  <p className="font-semibold">{item.wallet}</p>
-                  <p className="text-sm text-zinc-500">
-                    Joined {item.joinedAt}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end">
-                <p className="font-semibold text-emerald-300">{item.reward}</p>
-                <StatusBadge status={item.status} />
-              </div>
-            </div>
-          ))}
+        <div className="rounded-3xl border border-white/10 bg-black/25 p-5 text-sm text-zinc-500">
+          Referral count is now read from the contract. Individual referred
+          wallet history will require backend event indexing later.
         </div>
       </section>
     </div>

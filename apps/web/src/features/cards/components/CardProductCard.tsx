@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { waitForTransactionReceipt } from "@wagmi/core";
 import { useAccount } from "wagmi";
 import { config } from "@/features/wallet/providers/WalletProvider";
 import { BadgePercent, Check, Gift, Lock, ShoppingBag, X } from "lucide-react";
-import { GerotCard } from "@/features/cards/components/GerotCard";
+import { KryptPayCard } from "@/features/cards/components/KryptPayCard";
 import { ConnectWalletButton } from "@/features/wallet/components/ConnectWalletButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +27,10 @@ import {
   getUsdcToken,
   getUsdtToken,
 } from "@/lib/services/marketplaceService";
+import { getSavedReferrer } from "@/features/referral/referralStorage";
+import { appToast } from "@/lib/toast";
+import { createCardOrder } from "@/lib/services/cardOrderService";
+import { getUserCardIds } from "@/lib/services/vaultService";
 
 type CardProductCardProps = {
   id: string;
@@ -65,7 +69,7 @@ export function CardProductCard({
 
   return (
     <div className="w-full min-w-0 overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.035] p-4 sm:p-5">
-      <GerotCard variant={cardType} />
+      <KryptPayCard variant={cardType} />
 
       <div className="mt-6">
         <p className="text-sm uppercase tracking-[0.25em] text-emerald-300">
@@ -136,6 +140,12 @@ function PurchaseModal({
   const [phone, setPhone] = useState("");
 
   const [isPurchasing, setIsPurchasing] = useState(false);
+  const [savedReferrer, setSavedReferrer] = useState<string | null>(null);
+  const { address: walletAddress } = useAccount();
+
+  useEffect(() => {
+  setSavedReferrer(getSavedReferrer());
+}, []);
 
   const finalPrice = useMemo(() => {
     if (!appliedCoupon) return price;
@@ -164,50 +174,54 @@ function PurchaseModal({
   }
 
   async function handlePurchase() {
-    if (!fullName.trim() || !email.trim()) {
-      alert("Please enter your name and email.");
+  if (!fullName.trim() || !email.trim()) {
+    appToast.error("Please enter the card holder name and email.");
+    return;
+  }
+
+  if (isPhysical) {
+    if (
+      !address.trim() ||
+      !city.trim() ||
+      !stateName.trim() ||
+      !postalCode.trim() ||
+      !country.trim() ||
+      !phone.trim()
+    ) {
+      appToast.error("Please complete all shipping details.");
       return;
     }
+  }
 
-    if (isPhysical) {
-      if (
-        !address.trim() ||
-        !city.trim() ||
-        !stateName.trim() ||
-        !postalCode.trim() ||
-        !country.trim() ||
-        !phone.trim()
-      ) {
-        alert("Please complete all shipping details.");
-        return;
-      }
-    }
+  if (!walletAddress) {
+    appToast.error("Wallet address not found.");
+    return;
+  }
 
-    setIsPurchasing(true);
+  setIsPurchasing(true);
+  appToast.loading("Waiting for wallet confirmation...", "purchase");
 
-    try {
-      const cardTypeValue = CARD_TYPE_VALUE[cardType];
-      const paymentTokenValue = PAYMENT_TOKEN_VALUE[paymentChoice];
-      const coupon = appliedCoupon ? couponCode.trim() : "";
+  try {
+    const cardTypeValue = CARD_TYPE_VALUE[cardType];
+    const paymentTokenValue = PAYMENT_TOKEN_VALUE[paymentChoice];
+    const coupon = appliedCoupon ? couponCode.trim() : "";
 
-      const finalPriceUsd = await getFinalCardPriceUsd(cardTypeValue, coupon);
+    const finalPriceUsd = await getFinalCardPriceUsd(cardTypeValue, coupon);
 
-      if (paymentChoice === "eth") {
-        const ethValue = await getEthAmountForUsd(finalPriceUsd as bigint);
+    let txHash: `0x${string}`;
 
-        const hash = await buyCardOnchain({
-          cardType: cardTypeValue,
-          paymentToken: paymentTokenValue,
-          couponCode: coupon,
-          ethValue: ethValue as bigint,
-        });
+    if (paymentChoice === "eth") {
+      const ethValue = await getEthAmountForUsd(finalPriceUsd as bigint);
 
-        await waitForTransactionReceipt(config, { hash });
+      txHash = await buyCardOnchain({
+        cardType: cardTypeValue,
+        paymentToken: paymentTokenValue,
+        couponCode: coupon,
+        ethValue: ethValue as bigint,
+      });
 
-        alert("Card purchase successful.");
-        return;
-      }
-
+      await waitForTransactionReceipt(config, { hash: txHash });
+    } else {
       const stableAmount = getStableAmountForUsd(finalPriceUsd as bigint);
 
       const stableToken =
@@ -220,22 +234,55 @@ function PurchaseModal({
 
       await waitForTransactionReceipt(config, { hash: approvalHash });
 
-      const purchaseHash = await buyCardOnchain({
+      txHash = await buyCardOnchain({
         cardType: cardTypeValue,
         paymentToken: paymentTokenValue,
         couponCode: coupon,
       });
 
-      await waitForTransactionReceipt(config, { hash: purchaseHash });
-
-      alert("Card purchase successful.");
-    } catch (error) {
-      console.error(error);
-      alert("Purchase failed or rejected.");
-    } finally {
-      setIsPurchasing(false);
+      await waitForTransactionReceipt(config, { hash: txHash });
     }
+
+    const ids = (await getUserCardIds(walletAddress)) as bigint[];
+const latestCardId = ids.length ? ids[ids.length - 1].toString() : undefined;
+
+    await createCardOrder({
+      walletAddress,
+      productName: name,
+      cardType: cardType === "physical" ? "PHYSICAL" : "VIRTUAL",
+      paymentToken:
+        paymentChoice === "eth"
+          ? "ETH"
+          : paymentChoice === "usdc"
+            ? "USDC"
+            : "USDT",
+      txHash,
+      vaultCardId: latestCardId,
+      couponCode: coupon || undefined,
+      fullName,
+      email,
+      phone: phone || undefined,
+      address: address || undefined,
+      city: city || undefined,
+      state: stateName || undefined,
+      postalCode: postalCode || undefined,
+      country: country || undefined,
+    });
+
+    appToast.success(
+      "🎉 Card purchased and assigned successfully!",
+      "purchase",
+    );
+  } catch (error) {
+    console.error(error);
+    appToast.error(
+      "Purchase failed or transaction was rejected.",
+      "purchase",
+    );
+  } finally {
+    setIsPurchasing(false);
   }
+}
 
   return (
     <Dialog>
@@ -252,14 +299,14 @@ function PurchaseModal({
           </DialogHeader>
 
           <div className="mt-5">
-            <GerotCard variant={cardType} />
+            <KryptPayCard variant={cardType} />
           </div>
 
           <div className="mt-5 rounded-3xl border border-white/10 bg-white/[0.04] p-5">
-            <p className="mb-4 font-semibold">Your Details</p>
+            <p className="mb-4 font-semibold">Card Holder Details</p>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Full Name" className="border-white/10 bg-black/30" />
+              <Input value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Card Holder Name" className="border-white/10 bg-black/30" />
               <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email Address" type="email" className="border-white/10 bg-black/30" />
             </div>
 
@@ -305,6 +352,20 @@ function PurchaseModal({
               ))}
             </div>
           </div>
+
+{savedReferrer && (
+  <div className="mt-5 rounded-3xl border border-emerald-400/20 bg-emerald-400/10 p-5">
+    <p className="text-sm font-semibold text-emerald-300">
+      Referral detected
+    </p>
+    <p className="mt-2 break-all text-sm text-zinc-300">
+      Referrer: {savedReferrer}
+    </p>
+    <p className="mt-2 text-xs text-zinc-500">
+      Referral reward will be processed after purchase through backend indexing.
+    </p>
+  </div>
+)}
 
           <div className="mt-5 rounded-3xl border border-white/10 bg-white/[0.04] p-5">
             <div className="mb-3 flex items-center gap-2">

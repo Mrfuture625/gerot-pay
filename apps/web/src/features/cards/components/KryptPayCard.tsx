@@ -2,7 +2,7 @@
 
 import { Wifi } from "lucide-react";
 
-type GerotCardProps = {
+type KryptPayCardProps = {
   variant?: "virtual" | "physical";
   className?: string;
 };
@@ -18,10 +18,10 @@ function KryptPayLogo() {
   );
 }
 
-export function GerotCard({
+export function KryptPayCard({
   variant = "virtual",
   className = "",
-}: GerotCardProps) {
+}: KryptPayCardProps) {
   const isPhysical = variant === "physical";
 
   return (

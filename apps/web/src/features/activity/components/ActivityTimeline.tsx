@@ -16,6 +16,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { ConnectWalletButton } from "@/features/wallet/components/ConnectWalletButton";
 import { config } from "@/features/wallet/providers/WalletProvider";
 import { KRYPTPAY_CONTRACTS } from "@/lib/contracts/kryptpay";
+import { appToast } from "@/lib/toast";
 
 type Filter = "all" | "purchase" | "reload" | "withdraw" | "reward";
 
@@ -216,11 +217,11 @@ export function ActivityTimeline() {
     } catch (error) {
   console.error("Activity Error:", error);
 
-  if (error instanceof Error) {
-    alert(error.message);
-  } else {
-    alert(JSON.stringify(error));
-  }
+  appToast.error(
+    error instanceof Error
+      ? error.message
+      : "Failed to load activity.",
+  );
 } finally {
   setLoading(false);
 }

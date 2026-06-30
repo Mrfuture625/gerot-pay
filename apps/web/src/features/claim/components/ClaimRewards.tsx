@@ -14,6 +14,7 @@ import {
   getTotalPendingAmount,
   getUserRewards,
 } from "@/lib/services/rewardService";
+import { appToast } from "@/lib/toast";
 
 type RewardRecord = {
   id: bigint;
@@ -74,7 +75,7 @@ export function ClaimRewards() {
       setLocked(lockedAmount as bigint);
     } catch (error) {
       console.error(error);
-      alert("Failed to load rewards from contract.");
+      appToast.error("Failed to load rewards from contract.");
     } finally {
       setLoading(false);
     }
@@ -88,12 +89,16 @@ export function ClaimRewards() {
   async function handleClaim(id: bigint) {
     setClaimingId(id);
 
+appToast.loading("Waiting for wallet confirmation...", "claim");
+
     try {
       await claimReward(id);
       await loadRewards();
+
+      appToast.success("Reward claimed successfully.", "claim");
     } catch (error) {
       console.error(error);
-      alert("Claim failed or rejected.");
+      appToast.error("Claim failed or transaction was rejected.", "claim");
     } finally {
       setClaimingId(null);
     }
@@ -102,12 +107,19 @@ export function ClaimRewards() {
   async function handleInstantClaim(id: bigint) {
     setClaimingId(id);
 
+appToast.loading("Waiting for wallet confirmation...", "claim");
+
     try {
       await claimInstantReward(id);
       await loadRewards();
+
+      appToast.success("Reward claimed instantly.", "claim");
     } catch (error) {
       console.error(error);
-      alert("Instant claim failed or rejected. Make sure you approved the fee token if required.");
+      appToast.error(
+  "Instant claim failed or transaction was rejected.",
+  "claim",
+);
     } finally {
       setClaimingId(null);
     }

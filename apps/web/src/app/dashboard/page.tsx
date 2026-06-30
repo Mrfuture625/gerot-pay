@@ -16,7 +16,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { DashboardShell } from "@/components/layout/DashboardShell";
-import { GerotCard } from "@/features/cards/components/GerotCard";
+import { KryptPayCard } from "@/features/cards/components/KryptPayCard";
 import { ConnectWalletButton } from "@/features/wallet/components/ConnectWalletButton";
 import { NetworkWarning } from "@/features/wallet/components/NetworkWarning";
 import { getCard, getUserCardIds } from "@/lib/services/vaultService";
@@ -26,6 +26,7 @@ import {
   getTotalPendingAmount,
 } from "@/lib/services/rewardService";
 import { useDashboard } from "@/features/dashboard/hooks/useDashboard";
+import { appToast } from "@/lib/toast";
 
 type VaultCard = {
   cardId: bigint;
@@ -117,7 +118,7 @@ export default function DashboardPage() {
       setLockedRewards(locked as bigint);
     } catch (error) {
       console.error(error);
-      alert("Failed to load dashboard data from contracts.");
+      appToast.error("Failed to load dashboard data from contracts.");
     } finally {
       setLoading(false);
     }
@@ -131,7 +132,7 @@ export default function DashboardPage() {
   async function copyWallet() {
     if (!address) return;
     await navigator.clipboard.writeText(address);
-    alert("Wallet address copied.");
+   appToast.success("Wallet address copied.");
   }
 
   return (
@@ -188,7 +189,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <GerotCard variant="virtual" />
+            <KryptPayCard variant="virtual" />
           </div>
         </section>
 
@@ -450,7 +451,7 @@ function UserCardSummary({
 }) {
   return (
     <div className="rounded-3xl border border-white/10 bg-black/25 p-4">
-      <GerotCard variant={variant} className="rounded-[1.5rem]" />
+      <KryptPayCard variant={variant} className="rounded-[1.5rem]" />
 
       <div className="mt-4 flex items-end justify-between">
         <div>

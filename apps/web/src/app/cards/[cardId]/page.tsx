@@ -13,8 +13,9 @@ import {
   Wallet,
 } from "lucide-react";
 import { DashboardShell } from "@/components/layout/DashboardShell";
-import { GerotCard } from "@/features/cards/components/GerotCard";
+import { KryptPayCard } from "@/features/cards/components/KryptPayCard";
 import { getCard } from "@/lib/services/vaultService";
+import { appToast } from "@/lib/toast";
 
 type VaultCard = {
   cardId: bigint;
@@ -62,7 +63,7 @@ export default function CardDetailsPage() {
       setCard(result);
     } catch (error) {
       console.error(error);
-      alert("Failed to load card from Vault.");
+      appToast.error("Failed to load card from Vault.");
     } finally {
       setLoading(false);
     }
@@ -99,7 +100,7 @@ export default function CardDetailsPage() {
 
         <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
           <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
-            <GerotCard variant={cardVariant(card.cardType)} />
+            <KryptPayCard variant={cardVariant(card.cardType)} />
 
             <div className="mt-6 flex items-center justify-between">
               <div>

@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+model User {
+  id              String   @id @default(cuid())
+  walletAddress   String   @unique
+  email           String?  @unique
+  username        String?
+  telegramId      String?
+  referralCode    String   @unique
+  referredById    String?
+  role            UserRole @default(USER)
+  isEmailVerified Boolean  @default(false)
+  isActive        Boolean  @default(true)
+
+  referredBy User?  @relation("UserReferrals", fields: [referredById], references: [id])
+  referrals  User[] @relation("UserReferrals")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([walletAddress])
+  @@index([referralCode])
+}
+
+enum CardType {
+  VIRTUAL
+  PHYSICAL
+}
+
+model CardProduct {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  cardType    CardType
+  priceUsd    Decimal
+  stock       Int?
+  description String?
+  isActive    Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([cardType])
+  @@index([isActive])
+}
+
+model CardInventory {
+  id          String    @id @default(cuid())
+  cardNumber  String    @unique
+  cvv         String
+  expiryMonth String
+  expiryYear  String
+  cardType    CardType
+  isAssigned  Boolean   @default(false)
+  assignedAt  DateTime?
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  cardOrder CardOrder?
+
+  @@index([cardType])
+  @@index([isAssigned])
+}
+
+enum CardOrderStatus {
+  PENDING
+  PAID
+  ASSIGNED
+  FAILED
+  CANCELLED
+}
+
+enum PaymentToken {
+  ETH
+  USDC
+  USDT
+}
+
+model CardOrder {
+  id            String          @id @default(cuid())
+  walletAddress String
+  productId     String?
+  productName   String
+  cardType      CardType
+  paymentToken  PaymentToken
+  couponCode    String?
+  txHash        String          @unique
+  vaultCardId   String?
+  status        CardOrderStatus @default(PAID)
+
+  fullName   String
+  email      String
+  phone      String?
+  address    String?
+  city       String?
+  state      String?
+  postalCode String?
+  country    String?
+
+  assignedInventoryId String?        @unique
+  assignedInventory   CardInventory? @relation(fields: [assignedInventoryId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([walletAddress])
+  @@index([cardType])
+  @@index([status])
+}
