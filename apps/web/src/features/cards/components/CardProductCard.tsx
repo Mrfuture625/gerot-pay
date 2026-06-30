@@ -29,8 +29,6 @@ import {
 } from "@/lib/services/marketplaceService";
 import { getSavedReferrer } from "@/features/referral/referralStorage";
 import { appToast } from "@/lib/toast";
-import { createCardOrder } from "@/lib/services/cardOrderService";
-import { getUserCardIds } from "@/lib/services/vaultService";
 
 type CardProductCardProps = {
   id: string;
@@ -243,32 +241,7 @@ function PurchaseModal({
       await waitForTransactionReceipt(config, { hash: txHash });
     }
 
-    const ids = (await getUserCardIds(walletAddress)) as bigint[];
-const latestCardId = ids.length ? ids[ids.length - 1].toString() : undefined;
-
-    await createCardOrder({
-      walletAddress,
-      productName: name,
-      cardType: cardType === "physical" ? "PHYSICAL" : "VIRTUAL",
-      paymentToken:
-        paymentChoice === "eth"
-          ? "ETH"
-          : paymentChoice === "usdc"
-            ? "USDC"
-            : "USDT",
-      txHash,
-      vaultCardId: latestCardId,
-      couponCode: coupon || undefined,
-      fullName,
-      email,
-      phone: phone || undefined,
-      address: address || undefined,
-      city: city || undefined,
-      state: stateName || undefined,
-      postalCode: postalCode || undefined,
-      country: country || undefined,
-    });
-
+    
     appToast.success(
       "🎉 Card purchased and assigned successfully!",
       "purchase",
