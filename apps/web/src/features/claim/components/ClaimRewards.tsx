@@ -63,6 +63,10 @@ function formatUnlockTime(unlockTime: bigint | undefined, now: number) {
   return `Unlocks in ${days}d ${hours}h ${minutes}m ${seconds}s`;
 }
 
+function formatDate(timestamp: bigint) {
+  return new Date(Number(timestamp) * 1000).toLocaleString();
+}
+
 function getRewardLabel(type: number) {
   return rewardTypeLabels[type] ?? "KPAY Reward";
 }
@@ -150,6 +154,28 @@ setLocked(lockedAmount as bigint);
 
   return () => clearInterval(timer);
 }, []);
+
+useEffect(() => {
+  if (!address || rewards.length === 0) return;
+
+  const hasExpiredLockedReward = rewards.some((reward) => {
+    if (reward.claimed) return false;
+
+    const unlockTime = rewardUnlockTimes[reward.id.toString()];
+    if (!unlockTime) return false;
+
+    const isUnlockedInUi = unlockedRewardIds.has(reward.id.toString());
+    const hasExpired = Number(unlockTime) * 1000 <= now;
+
+    return hasExpired && !isUnlockedInUi;
+  });
+
+  if (hasExpiredLockedReward && !loading) {
+  void loadRewards();
+}
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [now, address, rewards, rewardUnlockTimes, unlockedRewardIds]);
 
   async function handleClaim(id: bigint) {
     setClaimingId(id);
@@ -341,28 +367,46 @@ await loadRewards();
                           )}
                         </div>
 
-                        <div>
-  <p className="font-semibold">
+                       <div>
+  <p className="font-semibold text-lg">
     {getRewardLabel(Number(reward.rewardType))}
   </p>
 
-  <p className="text-sm text-zinc-500">
-    {formatKpay(reward.amount)} KPAY •{" "}
-    {isClaimed
-      ? reward.claimedInstantly
-        ? "Claimed instantly"
-        : "Claimed"
-      : isLocked
-        ? "Locked"
-        : "Ready to claim"}
-  </p>
+  <div className="mt-2 space-y-1 text-sm text-zinc-400">
+    <p>
+      <span className="text-zinc-500">Amount:</span>{" "}
+      {formatKpay(reward.amount)} KPAY
+    </p>
+
+    <p>
+      <span className="text-zinc-500">Status:</span>{" "}
+      {isClaimed
+        ? reward.claimedInstantly
+          ? "Claimed Instantly"
+          : "Claimed"
+        : isLocked
+          ? "Locked"
+          : "Ready to Claim"}
+    </p>
+
+    <p>
+      <span className="text-zinc-500">Earned:</span>{" "}
+      {formatDate(reward.createdAt)}
+    </p>
+  </div>
 
   {!isClaimed && (
-    <p className="mt-1 text-xs text-zinc-500">
-      {formatUnlockTime(rewardUnlockTimes[reward.id.toString()], now)}
-    </p>
+    <div className="mt-3 rounded-xl border border-amber-400/20 bg-amber-400/10 px-3 py-2">
+      <p className="text-xs font-semibold text-amber-300">
+        {formatUnlockTime(
+          rewardUnlockTimes[reward.id.toString()],
+          now,
+        )}
+      </p>
+    </div>
   )}
 </div>
+
                       </div>
 
                       <div className="flex flex-col gap-2 sm:flex-row">
