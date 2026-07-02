@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Copy,
   Gift,
@@ -13,12 +13,18 @@ import {
 import { formatUnits } from "viem";
 import { useAccount, useReadContracts } from "wagmi";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { REWARD_CLAIM_ABI } from "@/lib/contracts/reward";
-import { KRYPTPAY_CONTRACTS } from "@/lib/contracts/kryptpay";
+import { REWARD_CLAIM_ABI } from "@kryptpay/contracts";
+import { KRYPTPAY_CONTRACTS } from "@kryptpay/contracts";
+import { getTelegramStatus } from "@/lib/services/telegramService";
 
 export function ReferralDashboard() {
   const { address, isConnected } = useAccount();
   const [copied, setCopied] = useState(false);
+  const [telegramStatus, setTelegramStatus] = useState({
+  telegramCompleted: false,
+  signupRewardEligible: false,
+  telegramUsername: null as string | null,
+});
 
   const rewardContract = {
     address: KRYPTPAY_CONTRACTS.rewardClaim,
@@ -72,6 +78,17 @@ export function ReferralDashboard() {
     if (typeof window === "undefined") return "";
     return `${window.location.origin}/?ref=${address}`;
   }, [referralCode]);
+
+  useEffect(() => {
+  async function loadTelegramStatus() {
+    if (!address) return;
+
+    const status = await getTelegramStatus(address);
+    setTelegramStatus(status);
+  }
+
+  loadTelegramStatus();
+}, [address]);
 
   async function copyReferralLink() {
     if (!isConnected || !referralLink) return;
@@ -183,6 +200,37 @@ export function ReferralDashboard() {
 
         
       </section>
+
+<section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
+  <div className="mb-4">
+    <p className="text-sm uppercase tracking-[0.25em] text-emerald-300">
+      Telegram Task
+    </p>
+    <h2 className="mt-2 text-2xl font-semibold">Signup reward eligibility</h2>
+  </div>
+
+  <div className="rounded-3xl border border-white/10 bg-black/25 p-5">
+    {telegramStatus.telegramCompleted ? (
+      <div>
+        <p className="font-semibold text-emerald-300">
+          Telegram task completed ✅
+        </p>
+        <p className="mt-2 text-sm text-zinc-400">
+          Username: @{telegramStatus.telegramUsername ?? "linked"}
+        </p>
+      </div>
+    ) : (
+      <div>
+        <p className="font-semibold text-amber-300">
+          Telegram task not completed
+        </p>
+        <p className="mt-2 text-sm text-zinc-400">
+          Complete the Telegram task to become eligible for the signup KPAY reward.
+        </p>
+      </div>
+    )}
+  </div>
+</section>
 
       <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
         <div className="mb-5">

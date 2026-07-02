@@ -15,8 +15,10 @@ import {
 import { DashboardShell } from "@/components/layout/DashboardShell";
 import { KryptPayCard } from "@/features/cards/components/KryptPayCard";
 import { ConnectWalletButton } from "@/features/wallet/components/ConnectWalletButton";
-import { getCard, getUserCardIds } from "@/lib/services/vaultService";
+import { getCard } from "@/lib/services/vaultService";
+import { getCardsByWallet } from "@/lib/services/cardsService";
 import { appToast } from "@/lib/toast";
+import { getOrdersByWallet, type SavedOrder } from "@/lib/services/ordersService";
 
 type VaultCard = {
   cardId: bigint;
@@ -53,6 +55,7 @@ export default function MyCardsPage() {
   const { address, isConnected } = useAccount();
 
   const [cards, setCards] = useState<VaultCard[]>([]);
+  const [orders, setOrders] = useState<SavedOrder[]>([]);
   const [loading, setLoading] = useState(false);
 
   const totalBalance = useMemo(
@@ -76,13 +79,18 @@ export default function MyCardsPage() {
     setLoading(true);
 
     try {
-      const ids = (await getUserCardIds(address)) as bigint[];
+      const savedCards = await getCardsByWallet(address);
 
-      const loadedCards = await Promise.all(
-        ids.map(async (id) => (await getCard(id)) as unknown as VaultCard),
-      );
+const loadedCards = await Promise.all(
+  savedCards.map(async (savedCard) => {
+    return (await getCard(BigInt(savedCard.vaultCardId))) as unknown as VaultCard;
+  }),
+);
+
+      const savedOrders = await getOrdersByWallet(address);
 
       setCards(loadedCards);
+      setOrders(savedOrders);
     } catch (error) {
       console.error(error);
       appToast.error("Failed to load Vault cards.");
@@ -138,7 +146,7 @@ export default function MyCardsPage() {
         ) : (
           <>
             <section className="grid gap-4 md:grid-cols-4">
-              <StatBox label="Total Cards" value={String(cards.length)} />
+              <StatBox label="Total Cards" value={String(cards.length || orders.length)} />
               <StatBox label="Total Balance" value={`$${formatUsd(totalBalance)}`} />
               <StatBox label="Reloaded" value={`$${formatUsd(totalReloaded)}`} />
               <StatBox label="Withdrawn" value={`$${formatUsd(totalWithdrawn)}`} />

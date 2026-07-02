@@ -13,6 +13,9 @@ import {
   getLockedAmount,
   getTotalPendingAmount,
   getUserRewards,
+  isRewardUnlocked,
+  claimAllRewards,
+claimAllInstantRewards,
 } from "@/lib/services/rewardService";
 import { appToast } from "@/lib/toast";
 
@@ -54,6 +57,8 @@ export function ClaimRewards() {
   const [locked, setLocked] = useState<bigint>(0n);
   const [loading, setLoading] = useState(false);
   const [claimingId, setClaimingId] = useState<bigint | null>(null);
+  const [unlockedRewardIds, setUnlockedRewardIds] = useState<Set<string>>(new Set());
+  const [claimingAll, setClaimingAll] = useState(false);
 
   async function loadRewards() {
     if (!address) return;
@@ -69,7 +74,24 @@ export function ClaimRewards() {
           getLockedAmount(address),
         ]);
 
-      setRewards([...(rewardList as RewardRecord[])].reverse());
+      const rewardArray = [...(rewardList as RewardRecord[])].reverse();
+
+const unlockedChecks = await Promise.all(
+  rewardArray.map(async (reward) => ({
+    id: reward.id.toString(),
+    unlocked: (await isRewardUnlocked(reward.id)) as boolean,
+  })),
+);
+
+setUnlockedRewardIds(
+  new Set(
+    unlockedChecks
+      .filter((item) => item.unlocked)
+      .map((item) => item.id),
+  ),
+);
+
+setRewards(rewardArray);
       setTotalPending(pendingAmount as bigint);
       setClaimable(claimableAmount as bigint);
       setLocked(lockedAmount as bigint);
@@ -124,6 +146,44 @@ appToast.loading("Waiting for wallet confirmation...", "claim");
       setClaimingId(null);
     }
   }
+
+  async function handleClaimAll() {
+  setClaimingAll(true);
+
+  appToast.loading("Waiting for wallet confirmation...", "claim-all");
+
+  try {
+    await claimAllRewards();
+    await loadRewards();
+
+    appToast.success("All unlocked rewards claimed.", "claim-all");
+  } catch (error) {
+    console.error(error);
+
+    appToast.error("Failed to claim rewards.", "claim-all");
+  } finally {
+    setClaimingAll(false);
+  }
+}
+
+async function handleClaimAllInstant() {
+  setClaimingAll(true);
+
+  appToast.loading("Waiting for wallet confirmation...", "claim-all");
+
+  try {
+    await claimAllInstantRewards();
+    await loadRewards();
+
+    appToast.success("All rewards claimed instantly.", "claim-all");
+  } catch (error) {
+    console.error(error);
+
+    appToast.error("Instant claim failed.", "claim-all");
+  } finally {
+    setClaimingAll(false);
+  }
+}
 
   return (
     <div className="space-y-6">
@@ -183,6 +243,24 @@ appToast.loading("Waiting for wallet confirmation...", "claim");
             </button>
           </div>
 
+<div className="flex gap-2">
+  <button
+    onClick={handleClaimAll}
+    disabled={claimingAll}
+    className="rounded-2xl bg-emerald-400 px-4 py-2 font-semibold text-black"
+  >
+    Claim All
+  </button>
+
+  <button
+    onClick={handleClaimAllInstant}
+    disabled={claimingAll}
+    className="rounded-2xl border border-amber-400/30 bg-amber-400/10 px-4 py-2 font-semibold text-amber-300"
+  >
+    Instant Claim All
+  </button>
+</div>
+
           {loading ? (
             <div className="rounded-3xl border border-white/10 bg-black/25 p-10 text-center text-zinc-400">
               Loading rewards from contract...
@@ -195,7 +273,8 @@ appToast.loading("Waiting for wallet confirmation...", "claim");
             <div className="space-y-3">
               {rewards.map((reward) => {
                 const isClaimed = reward.claimed;
-                const isClaimable = !isClaimed && reward.amount <= claimable;
+                const isClaimable =
+  !isClaimed && unlockedRewardIds.has(reward.id.toString());
                 const isLocked = !isClaimed && !isClaimable;
 
                 return (

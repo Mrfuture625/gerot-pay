@@ -15,6 +15,7 @@ import {
   Sparkles,
   Wallet,
   X,
+  Send,
   Zap,
 } from "lucide-react";
 import { ConnectWalletButton } from "@/features/wallet/components/ConnectWalletButton";
@@ -140,30 +141,35 @@ export default function HomePage() {
     ? `${address.slice(0, 6)}...${address.slice(-4)}`
     : "";
 
+const telegramBotUrl = process.env.NEXT_PUBLIC_TELEGRAM_BOT_URL;
+const telegramTaskUrl =
+  telegramBotUrl && address ? `${telegramBotUrl}?start=${address}` : null;
+
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#05060a] text-white">
       <section className="mx-auto max-w-7xl px-6 py-8">
-        <nav className="flex items-center justify-between">
-          <Link href="/">
-            <p className="text-2xl font-semibold">KryptPay</p>
-            <p className="text-xs text-emerald-300">
-              Crypto cards powered by wallets
-            </p>
-          </Link>
+       <nav className="flex items-center justify-between">
+  <Link href="/">
+    <p className="text-2xl font-semibold">KryptPay</p>
+    <p className="text-xs text-emerald-300">
+      Crypto cards powered by wallets
+    </p>
+  </Link>
 
-          <div className="flex items-center gap-3">
-            <ConnectWalletButton />
+  <div className="flex items-center gap-3">
+    <ConnectWalletButton />
 
-            {isConnected && (
-              <button
-                onClick={() => setOpen(true)}
-                className="rounded-2xl border border-white/10 bg-white/[0.04] p-3"
-              >
-                <Menu className="h-5 w-5" />
-              </button>
-            )}
-          </div>
-        </nav>
+    {isConnected && (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="rounded-2xl border border-white/10 bg-white/[0.04] p-3"
+      >
+        <Menu className="h-5 w-5" />
+      </button>
+    )}
+  </div>
+</nav>
 
         {open && isConnected && (
           <div className="fixed inset-0 z-50">
@@ -205,6 +211,20 @@ export default function HomePage() {
                       </Link>
                     );
                   })}
+
+                  {telegramTaskUrl && (
+  <a
+    href={telegramTaskUrl}
+    target="_blank"
+    rel="noreferrer"
+    onClick={() => setOpen(false)}
+    className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm text-emerald-300 hover:bg-emerald-400/10"
+  >
+    <Send className="h-4 w-4" />
+    Telegram Task
+  </a>
+)}
+
               </nav>
             </aside>
           </div>

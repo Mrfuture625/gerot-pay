@@ -9,6 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@kryptpay/contracts": "^1.0.0",
+    "@kryptpay/sdk": "^1.0.0",
+    "@kryptpay/shared-types": "^1.0.0",
     "@rainbow-me/rainbowkit": "^2.2.11",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.108.2",

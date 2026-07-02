@@ -19,6 +19,7 @@ import {
   reloadCardOnchain,
 } from "@/lib/services/vaultService";
 import { appToast } from "@/lib/toast";
+import { saveReload } from "@/lib/services/reloadHistoryService";
 
 type PaymentChoice = "eth" | "usdc" | "usdt";
 
@@ -135,6 +136,14 @@ export function ReloadFlow() {
         });
 
         await waitForTransactionReceipt(config, { hash });
+        if (!address) throw new Error("Wallet address not found.");
+
+await saveReload({
+  walletAddress: address,
+  vaultCardId: selectedCard.cardId.toString(),
+  amountUsd: amount,
+  txHash: hash,
+});
       } else {
         const stableAmount = getStableAmountForReload(usdAmount);
 
@@ -153,6 +162,14 @@ export function ReloadFlow() {
         });
 
         await waitForTransactionReceipt(config, { hash: reloadHash });
+        if (!address) throw new Error("Wallet address not found.");
+
+await saveReload({
+  walletAddress: address,
+  vaultCardId: selectedCard.cardId.toString(),
+  amountUsd: amount,
+  txHash: reloadHash,
+});
       }
 
       appToast.success("Reload successful.", "reload");

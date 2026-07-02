@@ -15,7 +15,7 @@ import {
 import { PageHeader } from "@/components/shared/PageHeader";
 import { ConnectWalletButton } from "@/features/wallet/components/ConnectWalletButton";
 import { config } from "@/features/wallet/providers/WalletProvider";
-import { KRYPTPAY_CONTRACTS } from "@/lib/contracts/kryptpay";
+import { KRYPTPAY_CONTRACTS } from "@kryptpay/contracts";
 import { appToast } from "@/lib/toast";
 
 type Filter = "all" | "purchase" | "reload" | "withdraw" | "reward";

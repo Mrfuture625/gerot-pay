@@ -7,6 +7,7 @@ import { ChevronRight, Menu, Sparkles, X } from "lucide-react";
 import { navItems } from "@/config/navigation";
 import { ConnectWalletButton } from "@/features/wallet/components/ConnectWalletButton";
 
+
 function BrandMark() {
   return (
     <div className="flex items-center gap-3">
@@ -86,8 +87,8 @@ export function DashboardShell({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#05060a] text-white">
-      <div className="pointer-events-none fixed inset-0">
+    <main className="relative min-h-screen overflow-hidden bg-[#05060a] text-white">
+      <div className="pointer-events-none fixed inset-0 -z-10">
         <div className="absolute left-[-10%] top-[-10%] h-80 w-80 rounded-full bg-emerald-400/10 blur-3xl" />
         <div className="absolute bottom-[-10%] right-[-10%] h-80 w-80 rounded-full bg-cyan-400/10 blur-3xl" />
       </div>
@@ -113,11 +114,13 @@ export function DashboardShell({
           <div className="pb-10">
   <SidebarNav pathname={pathname} />
 </div>
+
         </aside>
 
-        {mobileOpen && (
+                {mobileOpen && (
           <div className="fixed inset-0 z-50 lg:hidden">
             <button
+              type="button"
               className="absolute inset-0 bg-black/75 backdrop-blur-sm"
               onClick={() => setMobileOpen(false)}
             />
@@ -127,6 +130,7 @@ export function DashboardShell({
                 <BrandMark />
 
                 <button
+                  type="button"
                   onClick={() => setMobileOpen(false)}
                   className="rounded-2xl border border-white/10 bg-white/[0.04] p-2"
                 >
@@ -142,16 +146,19 @@ export function DashboardShell({
           </div>
         )}
 
-        <section className="min-w-0 flex-1 overflow-x-hidden">
+
+
+        <section className="relative z-10 min-w-0 flex-1 overflow-x-hidden">
           <header className="sticky top-0 z-40 border-b border-white/10 bg-[#05060a]/80 px-4 py-4 backdrop-blur-xl sm:px-6">
             <div className="flex items-center justify-between gap-4">
               <div className="flex min-w-0 items-center gap-3">
                 <button
-                  onClick={() => setMobileOpen(true)}
-                  className="rounded-2xl border border-white/10 bg-white/[0.04] p-2 lg:hidden"
-                >
-                  <Menu className="h-5 w-5" />
-                </button>
+  type="button"
+  onClick={() => setMobileOpen(true)}
+  className="relative z-50 rounded-2xl border border-white/10 bg-white/[0.04] p-2 lg:hidden"
+>
+  <Menu className="h-5 w-5" />
+</button>
 
                 <div className="min-w-0">
                   <p className="truncate text-xs uppercase tracking-[0.25em] text-emerald-300">

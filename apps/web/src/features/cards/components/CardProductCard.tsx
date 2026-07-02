@@ -29,6 +29,9 @@ import {
 } from "@/lib/services/marketplaceService";
 import { getSavedReferrer } from "@/features/referral/referralStorage";
 import { appToast } from "@/lib/toast";
+import { createOrder } from "@/lib/services/orderService";
+import { getUserCardIds } from "@/lib/services/vaultService";
+import { CardType, PaymentToken } from "@kryptpay/shared-types";
 
 type CardProductCardProps = {
   id: string;
@@ -241,21 +244,42 @@ function PurchaseModal({
       await waitForTransactionReceipt(config, { hash: txHash });
     }
 
-    
-    appToast.success(
-      "🎉 Card purchased and assigned successfully!",
-      "purchase",
-    );
+    const cardIds = (await getUserCardIds(walletAddress)) as bigint[];
+    const latestVaultCardId = cardIds.length
+      ? cardIds[cardIds.length - 1].toString()
+      : undefined;
+
+    await createOrder({
+      walletAddress,
+      cardType: cardType === "physical" ? CardType.PHYSICAL : CardType.VIRTUAL,
+paymentToken:
+  paymentChoice === "eth"
+    ? PaymentToken.ETH
+    : paymentChoice === "usdc"
+      ? PaymentToken.USDC
+      : PaymentToken.USDT,
+      txHash,
+      vaultCardId: latestVaultCardId,
+      cardHolderName: fullName,
+      email,
+      phone: phone || undefined,
+      address: address || undefined,
+      city: city || undefined,
+      state: stateName || undefined,
+      postalCode: postalCode || undefined,
+      country: country || undefined,
+    });
+
+    appToast.success("🎉 Purchase successful! Order saved.", "purchase");
   } catch (error) {
     console.error(error);
-    appToast.error(
-      "Purchase failed or transaction was rejected.",
-      "purchase",
-    );
+    appToast.error("Purchase failed or transaction was rejected.", "purchase");
   } finally {
     setIsPurchasing(false);
   }
 }
+
+
 
   return (
     <Dialog>

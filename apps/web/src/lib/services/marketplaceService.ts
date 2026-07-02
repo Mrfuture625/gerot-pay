@@ -1,7 +1,9 @@
 import { readContract, writeContract } from "@wagmi/core";
 import { config } from "@/features/wallet/providers/WalletProvider";
-import { KRYPTPAY_CONTRACTS } from "@/lib/contracts/kryptpay";
-import { MARKETPLACE_ABI } from "@/lib/contracts/marketplace";
+import {
+  MARKETPLACE_ABI,
+ KRYPTPAY_CONTRACTS,
+} from "@kryptpay/contracts";
 
 const ERC20_APPROVE_ABI = [
   {

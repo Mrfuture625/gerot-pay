@@ -6,9 +6,9 @@ import { getPublicClient } from "@wagmi/core";
 import { useAccount } from "wagmi";
 
 import { config } from "@/features/wallet/providers/WalletProvider";
-import { VAULT_ABI } from "@/lib/contracts/vault";
-import { REWARD_CLAIM_ABI } from "@/lib/contracts/reward";
-import { KRYPTPAY_CONTRACTS } from "@/lib/contracts/kryptpay";
+import { VAULT_ABI } from "@kryptpay/contracts";
+import { REWARD_CLAIM_ABI } from "@kryptpay/contracts";
+import { KRYPTPAY_CONTRACTS } from "@kryptpay/contracts";
 
 export function useDashboard() {
   const { address } = useAccount();
