@@ -207,19 +207,6 @@ export function ReferralDashboard() {
       Telegram Task
     </p>
     <h2 className="mt-2 text-2xl font-semibold">Signup reward eligibility</h2>
-
-    <button
-  type="button"
-  onClick={async () => {
-    if (!address) return;
-    const status = await getTelegramStatus(address);
-    setTelegramStatus(status);
-  }}
-  className="mt-4 rounded-2xl border border-white/10 px-4 py-2 text-sm text-zinc-300 hover:bg-white/10"
->
-  Refresh Telegram Status
-</button>
-
   </div>
 
   <div className="rounded-3xl border border-white/10 bg-black/25 p-5">
@@ -242,6 +229,28 @@ export function ReferralDashboard() {
         </p>
       </div>
     )}
+
+    <button
+      type="button"
+     onClick={async () => {
+  if (!address) return;
+
+  try {
+    console.log("Wallet:", address);
+
+    const status = await getTelegramStatus(address);
+
+    console.log("Telegram Status:", status);
+
+    setTelegramStatus(status);
+  } catch (err) {
+    console.error("Telegram status error:", err);
+  }
+}}
+      className="mt-4 rounded-2xl border border-white/10 px-4 py-2 text-sm text-zinc-300 hover:bg-white/10"
+    >
+      Refresh Telegram Status
+    </button>
   </div>
 </section>
 
