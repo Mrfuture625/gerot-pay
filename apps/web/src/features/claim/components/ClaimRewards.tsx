@@ -47,23 +47,20 @@ function formatKpay(value: bigint) {
   });
 }
 
-function formatUnlockTime(unlockTime?: bigint) {
+function formatUnlockTime(unlockTime: bigint | undefined, now: number) {
   if (!unlockTime) return "Unlock time unavailable";
 
-  const unlockMs = Number(unlockTime) * 1000;
-  const diffMs = unlockMs - Date.now();
+  const diffMs = Number(unlockTime) * 1000 - now;
 
   if (diffMs <= 0) return "Available now";
 
-  const diffHours = Math.ceil(diffMs / (1000 * 60 * 60));
-  const days = Math.floor(diffHours / 24);
-  const hours = diffHours % 24;
+  const totalSeconds = Math.floor(diffMs / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
 
-  if (days > 0) {
-    return `Unlocks in ${days}d ${hours}h`;
-  }
-
-  return `Unlocks in ${hours}h`;
+  return `Unlocks in ${days}d ${hours}h ${minutes}m ${seconds}s`;
 }
 
 function getRewardLabel(type: number) {
@@ -82,6 +79,7 @@ export function ClaimRewards() {
   const [unlockedRewardIds, setUnlockedRewardIds] = useState<Set<string>>(new Set());
   const [rewardUnlockTimes, setRewardUnlockTimes] = useState<Record<string, bigint>>({});
   const [claimingAll, setClaimingAll] = useState(false);
+  const [now, setNow] = useState(Date.now());
 
   async function loadRewards() {
     if (!address) return;
@@ -144,6 +142,14 @@ setLocked(lockedAmount as bigint);
     loadRewards();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [address]);
+
+  useEffect(() => {
+  const timer = setInterval(() => {
+    setNow(Date.now());
+  }, 1000);
+
+  return () => clearInterval(timer);
+}, []);
 
   async function handleClaim(id: bigint) {
     setClaimingId(id);
@@ -353,7 +359,7 @@ await loadRewards();
 
   {!isClaimed && (
     <p className="mt-1 text-xs text-zinc-500">
-      {formatUnlockTime(rewardUnlockTimes[reward.id.toString()])}
+      {formatUnlockTime(rewardUnlockTimes[reward.id.toString()], now)}
     </p>
   )}
 </div>
