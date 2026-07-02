@@ -79,15 +79,17 @@ export function ReferralDashboard() {
     return `${window.location.origin}/?ref=${address}`;
   }, [referralCode]);
 
-  useEffect(() => {
-  async function loadTelegramStatus() {
-    if (!address) return;
+ useEffect(() => {
+  if (!address) return;
 
-    const status = await getTelegramStatus(address);
-    setTelegramStatus(status);
-  }
-
-  loadTelegramStatus();
+  (async () => {
+    try {
+      const status = await getTelegramStatus(address);
+      setTelegramStatus(status);
+    } catch (error) {
+      console.error("Failed to load Telegram status:", error);
+    }
+  })();
 }, [address]);
 
   async function copyReferralLink() {
@@ -230,27 +232,7 @@ export function ReferralDashboard() {
       </div>
     )}
 
-    <button
-      type="button"
-     onClick={async () => {
-  if (!address) return;
-
-  try {
-    console.log("Wallet:", address);
-
-    const status = await getTelegramStatus(address);
-
-    console.log("Telegram Status:", status);
-
-    setTelegramStatus(status);
-  } catch (err) {
-    console.error("Telegram status error:", err);
-  }
-}}
-      className="mt-4 rounded-2xl border border-white/10 px-4 py-2 text-sm text-zinc-300 hover:bg-white/10"
-    >
-      Refresh Telegram Status
-    </button>
+  
   </div>
 </section>
 
