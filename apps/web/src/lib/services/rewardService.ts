@@ -81,3 +81,12 @@ export async function claimAllInstantRewards() {
     functionName: "claimAllInstant",
   });
 }
+
+export async function getRewardUnlockTime(rewardId: bigint) {
+  return readContract(config, {
+    address: KRYPTPAY_CONTRACTS.rewardClaim,
+    abi: REWARD_CLAIM_ABI,
+    functionName: "getRewardUnlockTime",
+    args: [rewardId],
+  });
+}

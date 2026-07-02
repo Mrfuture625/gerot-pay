@@ -6,6 +6,8 @@ import { Clock, Gift, Lock, Rocket, ShieldCheck, Wallet } from "lucide-react";
 import { useAccount } from "wagmi";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { ConnectWalletButton } from "@/features/wallet/components/ConnectWalletButton";
+import { waitForTransactionReceipt } from "@wagmi/core";
+import { config } from "@/features/wallet/providers/WalletProvider";
 import {
   claimInstantReward,
   claimReward,
@@ -16,6 +18,7 @@ import {
   isRewardUnlocked,
   claimAllRewards,
 claimAllInstantRewards,
+getRewardUnlockTime,
 } from "@/lib/services/rewardService";
 import { appToast } from "@/lib/toast";
 
@@ -44,6 +47,25 @@ function formatKpay(value: bigint) {
   });
 }
 
+function formatUnlockTime(unlockTime?: bigint) {
+  if (!unlockTime) return "Unlock time unavailable";
+
+  const unlockMs = Number(unlockTime) * 1000;
+  const diffMs = unlockMs - Date.now();
+
+  if (diffMs <= 0) return "Available now";
+
+  const diffHours = Math.ceil(diffMs / (1000 * 60 * 60));
+  const days = Math.floor(diffHours / 24);
+  const hours = diffHours % 24;
+
+  if (days > 0) {
+    return `Unlocks in ${days}d ${hours}h`;
+  }
+
+  return `Unlocks in ${hours}h`;
+}
+
 function getRewardLabel(type: number) {
   return rewardTypeLabels[type] ?? "KPAY Reward";
 }
@@ -58,6 +80,7 @@ export function ClaimRewards() {
   const [loading, setLoading] = useState(false);
   const [claimingId, setClaimingId] = useState<bigint | null>(null);
   const [unlockedRewardIds, setUnlockedRewardIds] = useState<Set<string>>(new Set());
+  const [rewardUnlockTimes, setRewardUnlockTimes] = useState<Record<string, bigint>>({});
   const [claimingAll, setClaimingAll] = useState(false);
 
   async function loadRewards() {
@@ -76,25 +99,39 @@ export function ClaimRewards() {
 
       const rewardArray = [...(rewardList as RewardRecord[])].reverse();
 
-const unlockedChecks = await Promise.all(
-  rewardArray.map(async (reward) => ({
-    id: reward.id.toString(),
-    unlocked: (await isRewardUnlocked(reward.id)) as boolean,
-  })),
+const rewardStatuses = await Promise.all(
+  rewardArray.map(async (reward) => {
+    const [unlocked, unlockTime] = await Promise.all([
+      isRewardUnlocked(reward.id),
+      getRewardUnlockTime(reward.id),
+    ]);
+
+    return {
+      id: reward.id.toString(),
+      unlocked: unlocked as boolean,
+      unlockTime: unlockTime as bigint,
+    };
+  }),
 );
 
 setUnlockedRewardIds(
   new Set(
-    unlockedChecks
+    rewardStatuses
       .filter((item) => item.unlocked)
       .map((item) => item.id),
   ),
 );
 
+setRewardUnlockTimes(
+  Object.fromEntries(
+    rewardStatuses.map((item) => [item.id, item.unlockTime]),
+  ),
+);
+
 setRewards(rewardArray);
-      setTotalPending(pendingAmount as bigint);
-      setClaimable(claimableAmount as bigint);
-      setLocked(lockedAmount as bigint);
+setTotalPending(pendingAmount as bigint);
+setClaimable(claimableAmount as bigint);
+setLocked(lockedAmount as bigint);
     } catch (error) {
       console.error(error);
       appToast.error("Failed to load rewards from contract.");
@@ -114,8 +151,9 @@ setRewards(rewardArray);
 appToast.loading("Waiting for wallet confirmation...", "claim");
 
     try {
-      await claimReward(id);
-      await loadRewards();
+      const hash = await claimReward(id);
+await waitForTransactionReceipt(config, { hash });
+await loadRewards();
 
       appToast.success("Reward claimed successfully.", "claim");
     } catch (error) {
@@ -132,8 +170,9 @@ appToast.loading("Waiting for wallet confirmation...", "claim");
 appToast.loading("Waiting for wallet confirmation...", "claim");
 
     try {
-      await claimInstantReward(id);
-      await loadRewards();
+     const hash = await claimInstantReward(id);
+await waitForTransactionReceipt(config, { hash });
+await loadRewards();
 
       appToast.success("Reward claimed instantly.", "claim");
     } catch (error) {
@@ -153,8 +192,9 @@ appToast.loading("Waiting for wallet confirmation...", "claim");
   appToast.loading("Waiting for wallet confirmation...", "claim-all");
 
   try {
-    await claimAllRewards();
-    await loadRewards();
+    const hash = await claimAllRewards();
+await waitForTransactionReceipt(config, { hash });
+await loadRewards();
 
     appToast.success("All unlocked rewards claimed.", "claim-all");
   } catch (error) {
@@ -172,8 +212,9 @@ async function handleClaimAllInstant() {
   appToast.loading("Waiting for wallet confirmation...", "claim-all");
 
   try {
-    await claimAllInstantRewards();
-    await loadRewards();
+    const hash = await claimAllInstantRewards();
+await waitForTransactionReceipt(config, { hash });
+await loadRewards();
 
     appToast.success("All rewards claimed instantly.", "claim-all");
   } catch (error) {
@@ -295,20 +336,27 @@ async function handleClaimAllInstant() {
                         </div>
 
                         <div>
-                          <p className="font-semibold">
-                            {getRewardLabel(Number(reward.rewardType))}
-                          </p>
-                          <p className="text-sm text-zinc-500">
-                            {formatKpay(reward.amount)} KPAY •{" "}
-                            {isClaimed
-                              ? reward.claimedInstantly
-                                ? "Claimed instantly"
-                                : "Claimed"
-                              : isLocked
-                                ? "Locked"
-                                : "Ready to claim"}
-                          </p>
-                        </div>
+  <p className="font-semibold">
+    {getRewardLabel(Number(reward.rewardType))}
+  </p>
+
+  <p className="text-sm text-zinc-500">
+    {formatKpay(reward.amount)} KPAY •{" "}
+    {isClaimed
+      ? reward.claimedInstantly
+        ? "Claimed instantly"
+        : "Claimed"
+      : isLocked
+        ? "Locked"
+        : "Ready to claim"}
+  </p>
+
+  {!isClaimed && (
+    <p className="mt-1 text-xs text-zinc-500">
+      {formatUnlockTime(rewardUnlockTimes[reward.id.toString()])}
+    </p>
+  )}
+</div>
                       </div>
 
                       <div className="flex flex-col gap-2 sm:flex-row">
