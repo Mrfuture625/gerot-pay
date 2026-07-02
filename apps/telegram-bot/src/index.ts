@@ -100,7 +100,7 @@ bot.action("verify_join", async (ctx) => {
 
     await ctx.answerCbQuery("Verified!");
     await ctx.reply(
-      "✅ Telegram task completed!\n\nYou are now eligible for the signup KPAY reward.",
+      "✅ Telegram task completed!\n\nYou are now eligible for the signup $KPAY reward.",
     );
   } catch (error) {
     console.error(error);

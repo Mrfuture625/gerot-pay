@@ -123,10 +123,16 @@ telegramRouter.post("/verify", async (req, res) => {
     }
 
     return res.json({
-      success: true,
-      user,
-      signupReward,
-    });
+  success: true,
+  user,
+  signupReward: signupReward
+    ? {
+        ...signupReward,
+        contractRewardId: signupReward.contractRewardId?.toString() ?? null,
+        createdAtOnchain: signupReward.createdAtOnchain?.toString() ?? null,
+      }
+    : null,
+});
   } catch (error) {
     console.error(error);
     return res.status(500).json({
