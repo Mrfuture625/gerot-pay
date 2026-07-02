@@ -9,10 +9,11 @@
   "scripts": {
     "dev": "npm run dev -w apps/web",
     "web": "npm run dev -w apps/web",
-    "api": "npm run dev -w apps/api",
-    "dev:all": "npm run dev -w apps/web & npm run dev -w apps/api",
+    "api": "npm run dev -w apps/aws-api",
+    "dev:all": "npm run dev -w apps/web & npm run dev -w apps/aws-api",
     "build:web": "npm run build -w apps/web",
-    "build:api": "npm run build -w apps/api"
+    "build:api": "npm run build -w apps/aws-api"
+    
   },
   "dependencies": {
     "@rainbow-me/rainbowkit": "^2.2.11",

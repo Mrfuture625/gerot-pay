@@ -1,0 +1,146 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   String     @id @default(cuid())
+  walletAddress        String     @unique
+  email                String?
+  telegramId           String?
+  telegramUsername     String?
+  telegramCompleted    Boolean    @default(false)
+  signupRewardEligible Boolean    @default(false)
+  signupRewardClaimed  Boolean    @default(false)
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
+  orders               Order[]
+  vaultCards           VaultCard[]
+  rewards              Reward[]
+  referrals            Referral[] @relation("Referrer")
+  
+}
+
+model Order {
+  id             String         @id @default(cuid())
+  walletAddress  String
+  vaultCardId    BigInt?
+  txHash         String         @unique
+  cardType       CardType
+  paymentToken   PaymentToken
+  cardHolderName String
+  email          String
+  phone          String?
+  address        String?
+  city           String?
+  state          String?
+  postalCode     String?
+  country        String?
+  status         OrderStatus    @default(PAID)
+  createdAt      DateTime       @default(now())
+  inventoryCard  CardInventory?
+  vaultCard      VaultCard?
+  user           User           @relation(fields: [walletAddress], references: [walletAddress])
+}
+
+model VaultCard {
+  id            String   @id @default(cuid())
+
+  walletAddress String
+  user          User     @relation(fields: [walletAddress], references: [walletAddress])
+
+  vaultCardId   BigInt   @unique
+  cardType      CardType
+
+  orderId       String?  @unique
+  order         Order?   @relation(fields: [orderId], references: [id])
+
+  active        Boolean  @default(true)
+  frozen        Boolean  @default(false)
+
+  createdAt     DateTime @default(now())
+}
+
+model CardInventory {
+  id          String   @id @default(cuid())
+  cardNumber  String   @unique
+  cvv         String
+  expiryMonth Int
+  expiryYear  Int
+  cardType    CardType
+  assigned    Boolean  @default(false)
+  orderId     String?  @unique
+  createdAt   DateTime @default(now())
+  order       Order?   @relation(fields: [orderId], references: [id])
+}
+
+model Reward {
+  id            String     @id @default(cuid())
+  walletAddress String
+  contractRewardId BigInt?
+  createdAtOnchain  BigInt?
+  rewardType    RewardType
+  amount        Decimal    @db.Decimal(18, 8)
+  claimed       Boolean    @default(false)
+  claimedAt    DateTime?
+  createdAt     DateTime   @default(now())
+  user          User       @relation(fields: [walletAddress], references: [walletAddress])
+}
+
+model Referral {
+  id             String   @id @default(cuid())
+  referrerWallet String
+  referredWallet String   @unique
+  rewardAmount   Decimal  @db.Decimal(18, 8)
+  createdAt      DateTime @default(now())
+  referrer       User     @relation("Referrer", fields: [referrerWallet], references: [walletAddress])
+}
+
+model Reload {
+  id            String   @id @default(cuid())
+  walletAddress String
+  vaultCardId   BigInt
+  amountUsd     Decimal  @db.Decimal(18, 8)
+  txHash        String   @unique
+  createdAt     DateTime @default(now())
+}
+
+model Withdrawal {
+  id            String   @id @default(cuid())
+  walletAddress String
+  vaultCardId   BigInt
+  amountUsd     Decimal  @db.Decimal(18, 8)
+  txHash        String   @unique
+  createdAt     DateTime @default(now())
+}
+
+enum CardType {
+  VIRTUAL
+  PHYSICAL
+}
+
+enum PaymentToken {
+  ETH
+  USDC
+  USDT
+}
+
+enum RewardType {
+  SIGNUP
+  PURCHASE
+  REFERRAL
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  ASSIGNED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
