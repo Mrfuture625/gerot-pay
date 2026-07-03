@@ -8,6 +8,7 @@ import { Check, CreditCard, Download, Wallet } from "lucide-react";
 import { config } from "@/features/wallet/providers/WalletProvider";
 import { KryptPayCard } from "@/features/cards/components/KryptPayCard";
 import { ConnectWalletButton } from "@/features/wallet/components/ConnectWalletButton";
+import { saveWithdrawal } from "@/lib/services/withdrawHistoryService";
 import {
   getCard,
   getEthAmountForReload,
@@ -152,7 +153,14 @@ export function WithdrawFlow() {
       });
 
       await waitForTransactionReceipt(config, { hash });
+if (!address) throw new Error("Wallet address not found.");
 
+await saveWithdrawal({
+  walletAddress: address,
+  vaultCardId: selectedCard.cardId.toString(),
+  amountUsd: amount,
+  txHash: hash,
+});
       appToast.success("Withdrawal successful.", "withdraw");
       setAmount("");
       await loadCards();

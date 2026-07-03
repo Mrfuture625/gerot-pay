@@ -2,6 +2,7 @@ import { Router } from "express";
 import { RewardType } from "../generated/prisma/client.js";
 import { prisma } from "../config/prisma.js";
 import { addSignupRewardOnchain } from "../services/rewardContractService.js";
+import { notify } from "../services/telegramNotificationService.js";
 
 export const telegramRouter = Router();
 
@@ -120,8 +121,12 @@ telegramRouter.post("/verify", async (req, res) => {
             : undefined,
         },
       });
+
+      await notify.signupReward(normalizedWallet, onchainReward.amountKpay);
     }
 
+
+    
     return res.json({
   success: true,
   user,

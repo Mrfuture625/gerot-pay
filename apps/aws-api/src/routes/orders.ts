@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../config/prisma.js";
 import { CardType, PaymentToken } from "../generated/prisma/client.js";
+import { assignCardToOrder } from "../services/cardAssignmentService.js";
 
 export const ordersRouter = Router();
 
@@ -30,69 +31,116 @@ ordersRouter.post("/", async (req, res) => {
     }
 
     const normalizedWallet = String(walletAddress).toLowerCase();
+    const normalizedCardType =
+      cardType === "PHYSICAL" ? CardType.PHYSICAL : CardType.VIRTUAL;
 
-    await prisma.user.upsert({
-      where: { walletAddress: normalizedWallet },
-      update: { email },
-      create: {
-        walletAddress: normalizedWallet,
-        email,
-      },
+    const result = await prisma.$transaction(async (tx) => {
+      await tx.user.upsert({
+        where: { walletAddress: normalizedWallet },
+        update: { email },
+        create: {
+          walletAddress: normalizedWallet,
+          email,
+        },
+      });
+
+      const availableCard = await tx.cardInventory.findFirst({
+        where: {
+          cardType: normalizedCardType,
+          assigned: false,
+        },
+        orderBy: {
+          createdAt: "asc",
+        },
+      });
+
+      if (!availableCard) {
+        throw new Error("CARD_OUT_OF_STOCK");
+      }
+
+      const order = await tx.order.create({
+        data: {
+          walletAddress: normalizedWallet,
+          cardType: normalizedCardType,
+          paymentToken:
+            paymentToken === "USDC"
+              ? PaymentToken.USDC
+              : paymentToken === "USDT"
+                ? PaymentToken.USDT
+                : PaymentToken.ETH,
+          txHash,
+          vaultCardId: vaultCardId ? BigInt(vaultCardId) : undefined,
+          cardHolderName,
+          email,
+          phone,
+          address,
+          city,
+          state,
+          postalCode,
+          country,
+        },
+      });
+
+      const assignedCard = await tx.cardInventory.update({
+        where: { id: availableCard.id },
+        data: {
+          assigned: true,
+          assignedWallet: normalizedWallet,
+          assignedAt: new Date(),
+          orderId: order.id,
+        },
+      });
+
+      let vaultCard = null;
+
+      if (vaultCardId) {
+        vaultCard = await tx.vaultCard.create({
+          data: {
+            walletAddress: normalizedWallet,
+            vaultCardId: BigInt(vaultCardId),
+            cardType: normalizedCardType,
+            orderId: order.id,
+          },
+        });
+      }
+
+      return {
+        order,
+        assignedCard,
+        vaultCard,
+      };
     });
-
-    const order = await prisma.order.create({
-      data: {
-        walletAddress: normalizedWallet,
-        cardType: cardType === "PHYSICAL" ? CardType.PHYSICAL : CardType.VIRTUAL,
-        paymentToken:
-          paymentToken === "USDC"
-            ? PaymentToken.USDC
-            : paymentToken === "USDT"
-              ? PaymentToken.USDT
-              : PaymentToken.ETH,
-        txHash,
-        vaultCardId: vaultCardId ? BigInt(vaultCardId) : undefined,
-        cardHolderName,
-        email,
-        phone,
-        address,
-        city,
-        state,
-        postalCode,
-        country,
-      },
-    });
-
-    let vaultCard = null;
-
-if (vaultCardId) {
-  vaultCard = await prisma.vaultCard.create({
-    data: {
-      walletAddress: normalizedWallet,
-      vaultCardId: BigInt(vaultCardId),
-      cardType:
-        cardType === "PHYSICAL" ? CardType.PHYSICAL : CardType.VIRTUAL,
-      orderId: order.id,
-    },
-  });
-}
 
     return res.json({
-  success: true,
-  order: {
-    ...order,
-    vaultCardId: order.vaultCardId?.toString() ?? null,
-  },
-  vaultCard: vaultCard
-    ? {
-        ...vaultCard,
-        vaultCardId: vaultCard.vaultCardId.toString(),
-      }
-    : null,
-});
-
+      success: true,
+      order: {
+        ...result.order,
+        vaultCardId: result.order.vaultCardId?.toString() ?? null,
+      },
+      vaultCard: result.vaultCard
+        ? {
+            ...result.vaultCard,
+            vaultCardId: result.vaultCard.vaultCardId.toString(),
+          }
+        : null,
+      assignedCard: {
+        id: result.assignedCard.id,
+        cardNumber: result.assignedCard.cardNumber,
+        cvv: result.assignedCard.cvv,
+        expiryMonth: result.assignedCard.expiryMonth,
+        expiryYear: result.assignedCard.expiryYear,
+        cardType: result.assignedCard.cardType,
+      },
+    });
   } catch (error) {
     console.error(error);
+
+    if (error instanceof Error && error.message === "CARD_OUT_OF_STOCK") {
+      return res.status(409).json({
+        success: false,
+        message: "This card type is currently out of stock.",
+      });
+    }
 
     return res.status(500).json({
       success: false,
