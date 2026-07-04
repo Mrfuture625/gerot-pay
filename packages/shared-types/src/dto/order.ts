@@ -7,7 +7,7 @@ export interface CreateOrderDto {
   txHash: string;
 
   vaultCardId?: string;
-
+couponCode?: string;
   cardHolderName: string;
   email: string;
 

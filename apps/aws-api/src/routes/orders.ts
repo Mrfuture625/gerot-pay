@@ -1,7 +1,6 @@
 import { Router } from "express";
 import { prisma } from "../config/prisma.js";
 import { CardType, PaymentToken } from "../generated/prisma/client.js";
-import { assignCardToOrder } from "../services/cardAssignmentService.js";
 
 export const ordersRouter = Router();
 
@@ -21,6 +20,7 @@ ordersRouter.post("/", async (req, res) => {
       postalCode,
       country,
       vaultCardId,
+      couponCode,
     } = req.body;
 
     if (!walletAddress || !cardType || !paymentToken || !txHash || !cardHolderName || !email) {
@@ -81,6 +81,19 @@ ordersRouter.post("/", async (req, res) => {
         },
       });
 
+            if (couponCode) {
+        await tx.coupon.update({
+          where: {
+            code: String(couponCode).trim().toUpperCase(),
+          },
+          data: {
+            usedCount: {
+              increment: 1,
+            },
+          },
+        });
+      }
+      
       const assignedCard = await tx.cardInventory.update({
         where: { id: availableCard.id },
         data: {

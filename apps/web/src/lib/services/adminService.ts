@@ -1,10 +1,40 @@
 const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-const adminKey = process.env.NEXT_PUBLIC_ADMIN_API_KEY;
+
+export function getAdminToken() {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("kryptpay_admin_token");
+}
+
+export function setAdminToken(token: string) {
+  localStorage.setItem("kryptpay_admin_token", token);
+}
+
+export function clearAdminToken() {
+  localStorage.removeItem("kryptpay_admin_token");
+}
 
 function adminHeaders() {
+  const token = getAdminToken();
+
   return {
-    "x-admin-key": adminKey ?? "",
+    Authorization: token ? `Bearer ${token}` : "",
   };
+}
+
+export async function adminLogin(adminKey: string) {
+  const response = await fetch(`${apiUrl}/admin/auth/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ adminKey }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Invalid admin key");
+  }
+
+  return response.json();
 }
 
 export async function getAdminInventory() {
@@ -45,6 +75,84 @@ export async function importCardCsv(file: File) {
 
   if (!response.ok) {
     throw new Error("Failed to import CSV");
+  }
+
+  return response.json();
+}
+
+export async function getAdminCoupons() {
+  const response = await fetch(`${apiUrl}/admin/coupons`, {
+    headers: adminHeaders(),
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to load coupons");
+  }
+
+  return response.json();
+}
+
+export async function createAdminCoupon(data: unknown) {
+  const response = await fetch(`${apiUrl}/admin/coupons`, {
+    method: "POST",
+    headers: {
+      ...adminHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to create coupon");
+  }
+
+  return response.json();
+}
+
+export async function updateAdminCoupon(id: string, data: unknown) {
+  const response = await fetch(`${apiUrl}/admin/coupons/${id}`, {
+    method: "PATCH",
+    headers: {
+      ...adminHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to update coupon");
+  }
+
+  return response.json();
+}
+
+export async function deleteAdminCoupon(id: string) {
+  const response = await fetch(`${apiUrl}/admin/coupons/${id}`, {
+    method: "DELETE",
+    headers: adminHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to delete coupon");
+  }
+
+  return response.json();
+}
+
+export async function redeemCoupon(code: string) {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  const response = await fetch(`${apiUrl}/coupons/redeem`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ code }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to redeem coupon");
   }
 
   return response.json();

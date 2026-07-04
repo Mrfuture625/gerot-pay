@@ -10,6 +10,9 @@ import { rewardsRouter } from "./routes/rewards.js";
 import { telegramRouter } from "./routes/telegram.js";
 import { notificationRouter } from "./routes/notifications.js";
 import { adminRouter } from "./routes/admin.js";
+import { adminAuthRouter } from "./routes/adminAuth.js";
+import { couponsRouter } from "./routes/coupons.js";
+import { publicCouponsRouter } from "./routes/publicCoupons.js";
 
 
 dotenv.config();
@@ -28,6 +31,9 @@ app.use("/rewards", rewardsRouter);
 app.use("/telegram", telegramRouter);
 app.use("/notifications", notificationRouter);
 app.use("/admin", adminRouter);
+app.use("/admin/auth", adminAuthRouter);
+app.use("/admin/coupons", couponsRouter);
+app.use("/coupons", publicCouponsRouter);
 
 app.get("/", (req, res) => {
   res.json({

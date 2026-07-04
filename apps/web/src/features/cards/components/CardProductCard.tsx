@@ -16,7 +16,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { validateCoupon, type CouponResult } from "@/server/coupons/couponService";
 import { getCardPurchaseReward } from "@/server/rewards/rewardService";
 import {
   approveStableToken,
@@ -43,6 +42,41 @@ type CardProductCardProps = {
 };
 
 type PaymentChoice = "eth" | "usdc" | "usdt";
+
+type CouponResult = {
+  id: string;
+  code: string;
+  discountType: "PERCENT" | "FIXED";
+  discountValue: string;
+};
+
+async function validateCouponApi(input: {
+  code: string;
+  cardType: "virtual" | "physical";
+  orderAmount: number;
+}) {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  const response = await fetch(`${apiUrl}/coupons/validate`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      code: input.code,
+      cardType: input.cardType.toUpperCase(),
+      orderAmount: input.orderAmount,
+    }),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.message || "Invalid coupon");
+  }
+
+  return result;
+}
 
 const CARD_TYPE_VALUE = {
   virtual: 0,
@@ -126,9 +160,11 @@ function PurchaseModal({
   const [paymentChoice, setPaymentChoice] = useState<PaymentChoice>("eth");
   const [couponCode, setCouponCode] = useState("");
   const [couponError, setCouponError] = useState("");
-  const [appliedCoupon, setAppliedCoupon] = useState<
-    null | Extract<CouponResult, { valid: true }>
-  >(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<null | {
+  coupon: CouponResult;
+  discountAmount: number;
+  finalAmount: number;
+}>(null);
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -148,25 +184,28 @@ function PurchaseModal({
   setSavedReferrer(getSavedReferrer());
 }, []);
 
-  const finalPrice = useMemo(() => {
-    if (!appliedCoupon) return price;
+  const finalPrice = appliedCoupon ? appliedCoupon.finalAmount : price;
 
-    const discount = (price * appliedCoupon.discountPercent) / 100;
-    return price - discount;
-  }, [price, appliedCoupon]);
+  async function applyCoupon() {
+  try {
+    const result = await validateCouponApi({
+      code: couponCode,
+      cardType,
+      orderAmount: price,
+    });
 
-  function applyCoupon() {
-    const result = validateCoupon(couponCode);
+    setAppliedCoupon({
+      coupon: result.coupon,
+      discountAmount: result.discountAmount,
+      finalAmount: result.finalAmount,
+    });
 
-    if (!result.valid) {
-      setCouponError(result.error);
-      setAppliedCoupon(null);
-      return;
-    }
-
-    setAppliedCoupon(result);
     setCouponError("");
+  } catch (error) {
+    setAppliedCoupon(null);
+    setCouponError(error instanceof Error ? error.message : "Invalid coupon");
   }
+}
 
   function removeCoupon() {
     setCouponCode("");
@@ -260,6 +299,7 @@ paymentToken:
       : PaymentToken.USDT,
       txHash,
       vaultCardId: latestVaultCardId,
+      couponCode: appliedCoupon ? appliedCoupon.coupon.code : undefined,
       cardHolderName: fullName,
       email,
       phone: phone || undefined,
@@ -386,9 +426,9 @@ paymentToken:
                   <div>
                     <div className="flex items-center gap-2">
                       <Check className="h-4 w-4 text-emerald-300" />
-                      <p className="font-semibold text-emerald-300">{appliedCoupon.name}</p>
+                     <p className="font-semibold text-emerald-300">{appliedCoupon.coupon.code}</p>
                     </div>
-                    <p className="mt-1 text-sm text-zinc-300">{appliedCoupon.details}</p>
+                    <p className="mt-1 text-sm text-zinc-300"> Discount: -${appliedCoupon.discountAmount.toFixed(2)}</p>
                   </div>
 
                   <button type="button" onClick={removeCoupon} className="rounded-full border border-white/10 p-1 text-zinc-400 hover:text-white">
