@@ -31,6 +31,7 @@ import { appToast } from "@/lib/toast";
 import { createOrder } from "@/lib/services/orderService";
 import { getUserCardIds } from "@/lib/services/vaultService";
 import { CardType, PaymentToken } from "@kryptpay/shared-types";
+import { formatUnits } from "viem";
 
 type CardProductCardProps = {
   id: string;
@@ -98,9 +99,26 @@ export function CardProductCard({
   const { isConnected } = useAccount();
 
   const isPhysical = cardType === "physical";
+  const [livePrice, setLivePrice] = useState<number>(priceEth);
   const rewardAmount = getCardPurchaseReward(cardType);
   const bonusBalance = isPhysical ? 15 : 5;
   const unlockReload = isPhysical ? 2 : 1;
+
+  useEffect(() => {
+  async function loadLivePrice() {
+    try {
+      const cardTypeValue = CARD_TYPE_VALUE[cardType];
+      const priceUsd = (await getFinalCardPriceUsd(cardTypeValue, "")) as bigint;
+
+      setLivePrice(Number(formatUnits(priceUsd, 18)));
+    } catch (error) {
+      console.error("Failed to load live card price:", error);
+      setLivePrice(priceEth);
+    }
+  }
+
+  loadLivePrice();
+}, [cardType, priceEth]);
 
   return (
     <div className="w-full min-w-0 overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.035] p-4 sm:p-5">
@@ -120,13 +138,13 @@ export function CardProductCard({
         <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm text-zinc-500">Starting Price</p>
-            <p className="text-3xl font-bold">${priceEth}</p>
+            <p className="text-3xl font-bold">${livePrice.toFixed(2)}</p>
           </div>
 
           <PurchaseModal
             name={name}
             cardType={cardType}
-            price={priceEth}
+            price={livePrice}
             rewardAmount={rewardAmount}
             bonusBalance={bonusBalance}
             unlockReload={unlockReload}
@@ -179,12 +197,44 @@ function PurchaseModal({
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [savedReferrer, setSavedReferrer] = useState<string | null>(null);
   const { address: walletAddress } = useAccount();
+  const [liveFinalPriceUsd, setLiveFinalPriceUsd] = useState<number>(price);
+const [ethDisplayPrice, setEthDisplayPrice] = useState<string | null>(null);
 
   useEffect(() => {
   setSavedReferrer(getSavedReferrer());
 }, []);
 
-  const finalPrice = appliedCoupon ? appliedCoupon.finalAmount : price;
+  const finalPrice = liveFinalPriceUsd;
+
+  useEffect(() => {
+  async function loadLivePrice() {
+    try {
+      const cardTypeValue = CARD_TYPE_VALUE[cardType];
+      const coupon = appliedCoupon ? couponCode.trim() : "";
+
+      const priceUsd = (await getFinalCardPriceUsd(
+        cardTypeValue,
+        coupon,
+      )) as bigint;
+
+      const nextPrice = Number(formatUnits(priceUsd, 18));
+      setLiveFinalPriceUsd(nextPrice);
+
+      if (paymentChoice === "eth") {
+        const ethAmount = (await getEthAmountForUsd(priceUsd)) as bigint;
+        setEthDisplayPrice(formatUnits(ethAmount, 18));
+      } else {
+        setEthDisplayPrice(null);
+      }
+    } catch (error) {
+      console.error(error);
+      setLiveFinalPriceUsd(price);
+      setEthDisplayPrice(null);
+    }
+  }
+
+  loadLivePrice();
+}, [cardType, appliedCoupon, paymentChoice, price]);
 
   async function applyCoupon() {
   try {
@@ -460,11 +510,20 @@ paymentToken:
           </div>
 
           <div className="mt-5 rounded-3xl border border-emerald-400/20 bg-emerald-400/10 p-5">
-            <p className="text-sm text-emerald-300">Final Price</p>
-            <p className="mt-1 text-4xl font-bold">
-              ${finalPrice.toFixed(2)} {paymentChoice.toUpperCase()}
-            </p>
-          </div>
+  <p className="text-sm text-emerald-300">Final Price</p>
+
+  <p className="mt-1 text-4xl font-bold">
+    {paymentChoice === "eth" && ethDisplayPrice
+      ? `${Number(ethDisplayPrice).toFixed(6)} ETH`
+      : `${finalPrice.toFixed(2)} ${paymentChoice.toUpperCase()}`}
+  </p>
+
+  {paymentChoice === "eth" && (
+    <p className="mt-2 text-sm text-emerald-200/80">
+      ≈ ${finalPrice.toFixed(2)} USD
+    </p>
+  )}
+</div>
 
           <div className="mt-5">
             {!isConnected ? (

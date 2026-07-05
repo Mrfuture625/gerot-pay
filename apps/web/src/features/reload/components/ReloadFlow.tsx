@@ -65,6 +65,7 @@ export function ReloadFlow() {
   const [paymentChoice, setPaymentChoice] = useState<PaymentChoice>("usdc");
   const [loading, setLoading] = useState(false);
   const [reloading, setReloading] = useState(false);
+  const [ethPreviewAmount, setEthPreviewAmount] = useState<string | null>(null);
 
   const selectedCard = useMemo(() => {
     return cards.find((card) => card.cardId === selectedCardId) ?? cards[0];
@@ -73,6 +74,29 @@ export function ReloadFlow() {
   const numericAmount = Number(amount || 0);
   const reloadAllowed =
     isConnected && !!selectedCard && numericAmount > 0 && !reloading;
+    useEffect(() => {
+  async function loadEthPreview() {
+    if (paymentChoice !== "eth" || numericAmount <= 0) {
+      setEthPreviewAmount(null);
+      return;
+    }
+
+    try {
+      const usdAmount = parseUnits(amount || "0", 18);
+
+      const ethAmount = (await getEthAmountForReload(
+        usdAmount,
+      )) as bigint;
+
+      setEthPreviewAmount(formatUnits(ethAmount, 18));
+    } catch (error) {
+      console.error(error);
+      setEthPreviewAmount(null);
+    }
+  }
+
+  loadEthPreview();
+}, [paymentChoice, amount, numericAmount]);
 
   async function loadCards() {
     if (!address) return;
@@ -347,10 +371,19 @@ await saveReload({
                   value={paymentChoice.toUpperCase()}
                 />
                 <SummaryRow
-                  icon={RefreshCw}
-                  label="Reload Amount"
-                  value={`$${numericAmount.toFixed(2)}`}
-                />
+  icon={RefreshCw}
+  label="Reload Amount"
+  value={
+    paymentChoice === "eth" && ethPreviewAmount
+      ? `${Number(ethPreviewAmount).toFixed(6)} ETH`
+      : `${numericAmount.toFixed(2)} ${paymentChoice.toUpperCase()}`
+  }
+/>
+{paymentChoice === "eth" && (
+  <p className="text-right text-sm text-zinc-500">
+    ≈ ${numericAmount.toFixed(2)} USD
+  </p>
+)}
               </div>
 
               <div className="mt-6">

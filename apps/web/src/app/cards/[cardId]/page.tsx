@@ -252,7 +252,7 @@ export default function CardDetailsPage() {
               Live on-chain card metadata
             </h2>
             <p className="mt-2 text-sm text-zinc-400">
-              This card is loaded directly from the KryptPay Vault contract.
+              This card is loaded directly from the KryptPay.
             </p>
           </div>
 

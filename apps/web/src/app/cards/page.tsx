@@ -92,9 +92,9 @@ const loadedCards = await Promise.all(
       setCards(loadedCards);
       setOrders(savedOrders);
     } catch (error) {
-      console.error(error);
-      appToast.error("Failed to load Vault cards.");
-    } finally {
+  console.error(error);
+  appToast.error("Failed to load your cards.");
+} finally {
       setLoading(false);
     }
   }
@@ -105,22 +105,8 @@ const loadedCards = await Promise.all(
   }, [address]);
 
   return (
-    <DashboardShell title="My Cards" subtitle="Manage your KryptPay cards">
+    <DashboardShell title="" subtitle="">
       <div className="space-y-6">
-        <section className="rounded-[2.5rem] border border-white/10 bg-gradient-to-br from-white/[0.08] via-white/[0.035] to-emerald-400/[0.08] p-6">
-          <p className="text-sm uppercase tracking-[0.3em] text-emerald-300">
-            Your Cards
-          </p>
-
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight">
-            Manage your Virtual and Physical cards.
-          </h1>
-
-          <p className="mt-4 max-w-2xl leading-7 text-zinc-400">
-            View live Vault balances, reload history, withdrawal totals, and
-            card status directly from your deployed KryptPay Vault contract.
-          </p>
-        </section>
 
         {!isConnected ? (
           <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
@@ -137,11 +123,11 @@ const loadedCards = await Promise.all(
           </section>
         ) : loading ? (
           <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-10 text-center text-zinc-400">
-            Loading your Vault cards...
+            Loading your cards...
           </section>
         ) : cards.length === 0 ? (
           <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-10 text-center text-zinc-400">
-            No Vault cards found for this wallet yet.
+            No KryptPay cards found for this wallet yet.
           </section>
         ) : (
           <>
@@ -272,9 +258,9 @@ const loadedCards = await Promise.all(
             </div>
 
             <div>
-              <h3 className="text-xl font-semibold">Live Vault cards</h3>
+              <h3 className="text-xl font-semibold">Your Vault cards</h3>
               <p className="mt-2 leading-7 text-zinc-400">
-                These cards are loaded directly from the KryptPay Vault contract.
+                These cards are loaded directly from the KryptPay.
                 Reload and withdraw actions update these balances on-chain.
               </p>
             </div>

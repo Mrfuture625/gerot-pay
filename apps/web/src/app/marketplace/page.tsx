@@ -15,7 +15,7 @@ export default async function CardsPage({ searchParams }: CardsPageProps) {
   const { data: products } = await getActiveCardProducts(type);
 
   return (
-    <DashboardShell title="Card Marketplace" subtitle="Choose your KryptPay card">
+    <DashboardShell title="" subtitle="">
       <div className="mb-8 rounded-[2rem] border border-white/10 bg-white/[0.04] p-6">
         <p className="text-sm uppercase tracking-[0.3em] text-emerald-300">
           KryptPay Marketplace
@@ -25,7 +25,7 @@ export default async function CardsPage({ searchParams }: CardsPageProps) {
 
         <p className="mt-2 max-w-2xl text-zinc-400">
           Purchase a Virtual or Physical KryptPay card, apply an optional coupon
-          during checkout, earn GP rewards and unlock your bonus balance after
+          during checkout, earn $KPAY rewards and unlock your bonus balance after
           your first reload.
         </p>
       </div>

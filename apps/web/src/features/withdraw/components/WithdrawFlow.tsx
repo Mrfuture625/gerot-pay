@@ -61,6 +61,7 @@ export function WithdrawFlow() {
   const [paymentChoice, setPaymentChoice] = useState<PaymentChoice>("usdc");
   const [loading, setLoading] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
+  const [ethPreviewAmount, setEthPreviewAmount] = useState<string | null>(null);
 
   const selectedCard = useMemo(() => {
     return cards.find((card) => card.cardId === selectedCardId) ?? cards[0];
@@ -90,6 +91,25 @@ export function WithdrawFlow() {
     amountUsd > 0n &&
     !exceedsBalance &&
     !withdrawing;
+
+    useEffect(() => {
+  async function loadEthPreview() {
+    if (paymentChoice !== "eth" || amountUsd <= 0n) {
+      setEthPreviewAmount(null);
+      return;
+    }
+
+    try {
+      const ethAmount = (await getEthAmountForReload(amountUsd)) as bigint;
+      setEthPreviewAmount(formatUnits(ethAmount, 18));
+    } catch (error) {
+      console.error(error);
+      setEthPreviewAmount(null);
+    }
+  }
+
+  loadEthPreview();
+}, [paymentChoice, amountUsd]);
 
   async function loadCards() {
     if (!address) return;
@@ -407,8 +427,16 @@ await saveWithdrawal({
                 <div className="mt-6 rounded-3xl border border-emerald-400/20 bg-emerald-400/10 p-5">
                   <p className="text-sm text-emerald-300">You Receive</p>
                   <p className="mt-1 text-3xl font-bold">
-                    {numericAmount.toFixed(2)} {paymentChoice.toUpperCase()}
-                  </p>
+  {paymentChoice === "eth" && ethPreviewAmount
+    ? `${Number(ethPreviewAmount).toFixed(6)} ETH`
+    : `${numericAmount.toFixed(2)} ${paymentChoice.toUpperCase()}`}
+</p>
+
+{paymentChoice === "eth" && (
+  <p className="mt-2 text-sm text-emerald-200/80">
+    ≈ ${numericAmount.toFixed(2)} USD
+  </p>
+)}
                 </div>
 
                 <div className="mt-6">
