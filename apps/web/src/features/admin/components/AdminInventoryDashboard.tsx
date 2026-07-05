@@ -55,9 +55,14 @@ export function AdminInventoryDashboard() {
   }, []);
 
   async function handleUpload() {
-    if (!selectedFile) return;
+  console.log("Upload clicked", selectedFile);
 
-    setUploading(true);
+  if (!selectedFile) {
+    alert("Please choose a CSV file first.");
+    return;
+  }
+
+  setUploading(true);
 
     try {
       const result = await importCardCsv(selectedFile);
@@ -129,20 +134,23 @@ export function AdminInventoryDashboard() {
         </h2>
 
         <input
-          type="file"
-          accept=".csv"
-          onChange={(e) =>
-            setSelectedFile(e.target.files?.[0] ?? null)
-          }
-        />
+  type="file"
+  accept=".csv,text/csv"
+  onChange={(e) => {
+    const file = e.target.files?.[0] ?? null;
+    console.log("Selected file:", file);
+    setSelectedFile(file);
+  }}
+/>
 
         <button
-          onClick={handleUpload}
-          disabled={!selectedFile || uploading}
-          className="rounded-xl bg-emerald-500 px-6 py-3 font-semibold text-black"
-        >
-          {uploading ? "Uploading..." : "Upload CSV"}
-        </button>
+  type="button"
+  onClick={handleUpload}
+  disabled={uploading}
+  className="rounded-xl bg-emerald-500 px-6 py-3 font-semibold text-black disabled:opacity-60"
+>
+  {uploading ? "Uploading..." : "Upload CSV"}
+</button>
       </div>
 
       <div className="rounded-2xl border p-6">
