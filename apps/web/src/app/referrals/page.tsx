@@ -3,7 +3,7 @@ import { ReferralDashboard } from "@/features/referral/components/ReferralDashbo
 
 export default function ReferralsPage() {
   return (
-    <DashboardShell title="Referral" subtitle="Invite friends and earn $KPAY">
+    <DashboardShell title="Referral" subtitle="">
       <ReferralDashboard />
     </DashboardShell>
   );

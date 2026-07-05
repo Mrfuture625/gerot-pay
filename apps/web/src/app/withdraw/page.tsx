@@ -5,7 +5,7 @@ export default function WithdrawPage() {
   return (
     <DashboardShell
       title="Withdraw Funds"
-      subtitle="Move funds from your KryptPay card"
+      subtitle=""
     >
       <WithdrawFlow />
     </DashboardShell>

@@ -15,9 +15,9 @@ export const mockCardTransactions = [
     icon: CreditCard,
   },
   {
-    title: "GP Reward Added",
+    title: "$KPAY Reward Added",
     detail: "Reward received after purchase",
-    amount: "+10 GP",
+    amount: "+10 $KPAY",
     time: "Today",
     icon: Gift,
   },

@@ -136,7 +136,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <DashboardShell title="Dashboard" subtitle="KryptPay wallet overview">
+    <DashboardShell title="Dashboard" subtitle="">
       <div className="space-y-6">
         <section className="overflow-hidden rounded-[2.5rem] border border-white/10 bg-gradient-to-br from-white/[0.08] via-white/[0.035] to-emerald-400/[0.08] p-6">
           <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">

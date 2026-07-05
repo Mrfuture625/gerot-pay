@@ -3,7 +3,7 @@ import { ActivityTimeline } from "@/features/activity/components/ActivityTimelin
 
 export default function ActivityPage() {
   return (
-    <DashboardShell title="Activity" subtitle="Track your KryptPay transactions">
+    <DashboardShell title="Activity" subtitle="">
       <ActivityTimeline />
     </DashboardShell>
   );

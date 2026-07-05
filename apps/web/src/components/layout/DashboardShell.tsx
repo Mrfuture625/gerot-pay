@@ -14,7 +14,7 @@ function BrandMark() {
       <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-300/30 bg-gradient-to-br from-emerald-300 via-cyan-300 to-emerald-500 shadow-lg shadow-emerald-500/20">
         <div className="absolute inset-[3px] rounded-[0.85rem] bg-black/85" />
         <span className="relative bg-gradient-to-br from-emerald-200 to-cyan-200 bg-clip-text text-sm font-black tracking-tight text-transparent">
-          GP
+          KP
         </span>
       </div>
 
@@ -106,7 +106,7 @@ export function DashboardShell({
             </div>
 
             <p className="mt-2 text-xs leading-5 text-zinc-500">
-              Connect wallet, purchase cards, reload, withdraw and earn GP
+              Connect wallet, purchase cards, reload, withdraw and earn $KPAY
               rewards.
             </p>
           </div>

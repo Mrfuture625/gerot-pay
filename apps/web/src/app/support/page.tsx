@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 
 export default function SupportPage() {
   return (
-    <DashboardShell title="Support" subtitle="KryptPay help center">
+    <DashboardShell title="Support" subtitle="">
       <div className="space-y-6">
         <PageHeader
           eyebrow="Support"

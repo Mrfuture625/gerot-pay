@@ -118,8 +118,8 @@ export function ReferralDashboard() {
     <div className="space-y-6">
       <PageHeader
         eyebrow="Referral"
-        title="Invite friends and earn GP rewards."
-        description="Share your KryptPay referral link. Referral rewards are read directly from the reward contract."
+        title="Invite friends and earn $KPAY rewards."
+        description="Share your KryptPay referral link to your friends and earn $KPAY "
       />
 
       {!isConnected && (
@@ -136,13 +136,13 @@ export function ReferralDashboard() {
         />
         <StatCard
           icon={Gift}
-          label="Total GP Earned"
-          value={isLoading ? "Loading..." : `${Number(totalEarned).toLocaleString()} GP`}
+          label="Total $KPAY Earned"
+          value={isLoading ? "Loading..." : `${Number(totalEarned).toLocaleString()} $KPAY`}
         />
         <StatCard
           icon={Wallet}
           label="Pending Rewards"
-          value={isLoading ? "Loading..." : `${Number(pendingRewards).toLocaleString()} GP`}
+          value={isLoading ? "Loading..." : `${Number(pendingRewards).toLocaleString()} $KPAY`}
         />
       </section>
 

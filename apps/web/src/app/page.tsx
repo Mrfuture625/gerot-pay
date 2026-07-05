@@ -52,8 +52,8 @@ function PremiumCardPreview() {
       <div className="absolute -left-10 -top-10 h-48 w-48 rounded-full bg-emerald-400/20 blur-3xl" />
       <div className="absolute -bottom-10 -right-10 h-48 w-48 rounded-full bg-cyan-400/20 blur-3xl" />
 
-      <div className="relative rotate-[-4deg] rounded-[2rem] border border-white/15 bg-gradient-to-br from-zinc-950 via-emerald-950/80 to-black p-6 shadow-2xl shadow-emerald-950/40">
-        <div className="absolute inset-0 rounded-[2rem] bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.20),transparent_20%),radial-gradient(circle_at_80%_10%,rgba(16,185,129,0.35),transparent_25%),radial-gradient(circle_at_70%_85%,rgba(34,211,238,0.22),transparent_30%)]" />
+      <div className="relative rounded-[2rem] border border-white/15 bg-gradient-to-br from-zinc-950 via-emerald-950/70 to-black p-6 shadow-2xl shadow-emerald-950/40">
+        <div className="absolute inset-0 rounded-[2rem] bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.16),transparent_20%),radial-gradient(circle_at_80%_10%,rgba(16,185,129,0.32),transparent_25%),radial-gradient(circle_at_70%_85%,rgba(34,211,238,0.2),transparent_30%)]" />
 
         <div className="relative">
           <div className="flex items-start justify-between">
@@ -64,60 +64,34 @@ function PremiumCardPreview() {
               </p>
             </div>
 
-            <div className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs">
-              GP CARD
+            <div className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold">
+              KP CARD
             </div>
           </div>
 
-          <div className="mt-10 h-11 w-14 rounded-lg border border-yellow-200/40 bg-gradient-to-br from-yellow-200 via-yellow-500 to-yellow-800 shadow-lg" />
-
-          <div className="mt-8 text-2xl tracking-[0.35em] text-zinc-100">
-            4892  ••••  ••••  0928
+          <div className="mt-10 flex justify-end text-3xl text-white/70">
+            )))
           </div>
 
-          <div className="mt-8 flex items-end justify-between">
-            <div>
+          <div className="mt-8 text-xl tracking-[0.22em] text-zinc-100 sm:text-2xl sm:tracking-[0.32em]">
+            •••• •••• •••• 4732
+          </div>
+
+          <div className="mt-8 flex items-end justify-between gap-4">
+            <div className="min-w-0">
               <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
                 Card Holder
               </p>
-              <p className="mt-1 font-medium">Wallet User</p>
-            </div>
-
-            <div>
-              <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                Valid
-              </p>
-              <p className="mt-1 font-medium">12/30</p>
+              <p className="mt-1 truncate font-medium">Wallet User</p>
             </div>
 
             <div className="text-right">
               <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                Type
+                Valid
               </p>
-              <p className="mt-1 font-medium">Virtual</p>
+              <p className="mt-1 font-medium">09/28</p>
             </div>
           </div>
-        </div>
-      </div>
-
-      <div className="relative ml-auto mt-[-55px] w-[82%] rotate-[5deg] rounded-[2rem] border border-white/15 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black p-6 shadow-2xl">
-        <div className="mb-5 h-10 rounded-md bg-zinc-800" />
-
-        <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
-          <div className="flex justify-between text-sm">
-            <span className="text-zinc-500">Bonus Balance</span>
-            <span className="text-amber-300">Locked</span>
-          </div>
-
-          <p className="mt-2 text-3xl font-semibold">$5.00</p>
-
-          <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
-            <div className="h-full w-2/3 rounded-full bg-emerald-400" />
-          </div>
-
-          <p className="mt-3 text-xs text-zinc-400">
-            Reload $1 to activate your promo balance.
-          </p>
         </div>
       </div>
     </div>
@@ -232,9 +206,11 @@ const telegramTaskUrl =
 
         <div className="grid min-h-[82vh] items-center gap-16 py-20 lg:grid-cols-2">
           <div>
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-4 py-2 text-sm text-emerald-300">
+            <div className="mb-6 inline-flex max-w-full items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-2 text-xs sm:px-4 sm:text-sm text-emerald-300">
               <Sparkles className="h-4 w-4" />
-              Wallet-connected crypto card platform
+              <span className="whitespace-normal break-words">
+  Wallet-connected crypto card platform
+</span>
             </div>
 
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold tracking-tight md:text-7xl">
@@ -243,7 +219,7 @@ const telegramTaskUrl =
 
             <p className="mt-6 max-w-2xl text-lg leading-8 text-zinc-400">
               KryptPay lets users connect their wallet, purchase Virtual or
-              Physical cards, apply coupon discounts, earn GP token rewards,
+              Physical cards, apply coupon discounts, earn $KPAY token rewards,
               unlock bonus balances, track card transactions and manage reloads
               from a secure Web3 dashboard.
             </p>
@@ -268,7 +244,7 @@ const telegramTaskUrl =
               {[
                 ["Virtual Card", "$1 initial price"],
                 ["Physical Card", "$2 initial price"],
-                ["GP Rewards", "10 / 100 GP"],
+                ["KPAY Rewards", "10 / 100 $KPAY"],
               ].map(([title, value]) => (
                 <div
                   key={title}
@@ -317,47 +293,9 @@ const telegramTaskUrl =
           })}
         </section>
 
-        <section className="grid gap-6 rounded-[2.5rem] border border-white/10 bg-white/[0.035] p-6 md:grid-cols-2 lg:p-10">
-          <div>
-            <p className="text-sm uppercase tracking-[0.3em] text-emerald-300">
-              Bonus Balance
-            </p>
-            <h2 className="mt-4 text-4xl font-semibold">
-              Promo balance that unlocks after first reload.
-            </h2>
-            <p className="mt-5 leading-8 text-zinc-400">
-              Virtual Card users receive a displayed $5 bonus balance. Physical
-              Card users receive a displayed $15 bonus balance. The bonus starts
-              locked and becomes active only after the required first reload.
-            </p>
-          </div>
+        
 
-          <div className="grid gap-4">
-            <div className="rounded-3xl border border-white/10 bg-black/30 p-5">
-              <div className="flex items-center justify-between">
-                <p className="font-semibold">Virtual Card Bonus</p>
-                <Lock className="h-5 w-5 text-amber-300" />
-              </div>
-              <p className="mt-3 text-3xl font-semibold">$5 Locked</p>
-              <p className="mt-2 text-sm text-zinc-400">
-                Unlock after reloading $1.
-              </p>
-            </div>
-
-            <div className="rounded-3xl border border-white/10 bg-black/30 p-5">
-              <div className="flex items-center justify-between">
-                <p className="font-semibold">Physical Card Bonus</p>
-                <Lock className="h-5 w-5 text-amber-300" />
-              </div>
-              <p className="mt-3 text-3xl font-semibold">$15 Locked</p>
-              <p className="mt-2 text-sm text-zinc-400">
-                Unlock after reloading $2.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <section className="grid gap-5 py-16 md:grid-cols-4">
+        <section className="grid gap-5 pt-6 pb-16 md:grid-cols-4">
           {[
             {
               icon: RefreshCw,
@@ -372,7 +310,7 @@ const telegramTaskUrl =
             {
               icon: Gift,
               title: "Referrals",
-              text: "Invite users and earn GP token rewards.",
+              text: "Invite users and earn $KPAY token rewards.",
             },
             {
               icon: ShieldCheck,
@@ -402,7 +340,7 @@ const telegramTaskUrl =
             Marketplace Ready
           </p>
           <h2 className="mt-4 text-4xl font-semibold">
-            Purchase cards, apply coupons and earn GP rewards.
+            Purchase cards, apply coupons and earn $KPAY rewards.
           </h2>
           <p className="mx-auto mt-5 max-w-2xl leading-8 text-zinc-400">
             The marketplace will support optional coupon codes during checkout,
@@ -421,17 +359,22 @@ const telegramTaskUrl =
           <p>© {new Date().getFullYear()} KryptPay. All rights reserved.</p>
 
           <div className="flex gap-3 text-zinc-300">
-            <Link href="#" className="rounded-full border border-white/10 p-3">
+            <Link
+  href="https://x.com/YOUR_USERNAME"
+  target="_blank"
+  className="rounded-full border border-white/10 p-3"
+>
               <SocialIcon name="x" />
             </Link>
 
-            <Link href="#" className="rounded-full border border-white/10 p-3">
+            <Link
+  href="https://t.me/YOUR_USERNAME"
+  target="_blank"
+  className="rounded-full border border-white/10 p-3"
+>
               <SocialIcon name="telegram" />
             </Link>
 
-            <Link href="#" className="rounded-full border border-white/10 p-3">
-              <SocialIcon name="farcaster" />
-            </Link>
           </div>
         </footer>
       </section>
