@@ -9,6 +9,14 @@ export type SavedOrder = {
   email: string;
   status: string;
   createdAt: string;
+  inventoryCard?: {
+  id: string;
+  cardNumber: string;
+  cvv: string;
+  expiryMonth: number;
+  expiryYear: number;
+  cardType: string;
+} | null;
 };
 
 export async function getOrdersByWallet(walletAddress: string) {

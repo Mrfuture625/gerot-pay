@@ -1,5 +1,7 @@
 "use client";
 
+import { useAccount } from "wagmi";
+import { getOrdersByWallet, type SavedOrder } from "@/lib/services/ordersService";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -48,11 +50,23 @@ function formatDate(timestamp: bigint) {
   return new Date(Number(timestamp) * 1000).toLocaleString();
 }
 
+function formatExpiry(month?: number | string | null, year?: number | string | null) {
+  if (!month || !year) return "12/29";
+  return `${String(month).padStart(2, "0")}/${String(year).slice(-2)}`;
+}
+
+function formatCardNumber(cardNumber?: string | null) {
+  if (!cardNumber) return "Unavailable";
+  return cardNumber.replace(/(.{4})/g, "$1 ").trim();
+}
+
 export default function CardDetailsPage() {
   const params = useParams();
+  const { address } = useAccount();
   const cardId = BigInt(String(params.cardId));
 
   const [card, setCard] = useState<VaultCard | null>(null);
+  const [order, setOrder] = useState<SavedOrder | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function loadCard() {
@@ -61,6 +75,14 @@ export default function CardDetailsPage() {
     try {
       const result = (await getCard(cardId)) as unknown as VaultCard;
       setCard(result);
+      if (address) {
+  const orders = await getOrdersByWallet(address);
+  const matchingOrder = orders.find(
+    (item) => item.vaultCardId === cardId.toString(),
+  );
+
+  setOrder(matchingOrder ?? null);
+}
     } catch (error) {
       console.error(error);
       appToast.error("Failed to load card from Vault.");
@@ -100,7 +122,16 @@ export default function CardDetailsPage() {
 
         <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
           <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
-            <KryptPayCard variant={cardVariant(card.cardType)} />
+            <KryptPayCard
+  variant={cardVariant(card.cardType)}
+  cardNumber={order?.inventoryCard?.cardNumber ?? "0000000000004732"}
+  holderName={order?.cardHolderName ?? "Wallet User"}
+  expiry={formatExpiry(
+    order?.inventoryCard?.expiryMonth,
+    order?.inventoryCard?.expiryYear,
+  )}
+  masked={false}
+/>
 
             <div className="mt-6 flex items-center justify-between">
               <div>
@@ -178,6 +209,39 @@ export default function CardDetailsPage() {
             Withdraw From Card
           </Link>
         </section>
+
+<section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
+  <div className="mb-5">
+    <p className="text-sm uppercase tracking-[0.25em] text-emerald-300">
+      Card Details
+    </p>
+    <h2 className="mt-2 text-2xl font-semibold">
+      Assigned card information
+    </h2>
+  </div>
+
+  <div className="grid gap-3 md:grid-cols-2">
+    <DetailRow
+      label="Card Number"
+      value={formatCardNumber(order?.inventoryCard?.cardNumber)}
+    />
+    <DetailRow
+      label="Card Holder"
+      value={order?.cardHolderName ?? "Unavailable"}
+    />
+    <DetailRow
+      label="Expiry"
+      value={formatExpiry(
+        order?.inventoryCard?.expiryMonth,
+        order?.inventoryCard?.expiryYear,
+      )}
+    />
+    <DetailRow
+      label="CVV"
+      value={order?.inventoryCard?.cvv ?? "Unavailable"}
+    />
+  </div>
+</section>
 
         <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
           <div className="mb-5">

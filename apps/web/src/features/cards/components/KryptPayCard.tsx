@@ -5,6 +5,12 @@ import { Wifi } from "lucide-react";
 type KryptPayCardProps = {
   variant?: "virtual" | "physical";
   className?: string;
+
+  cardNumber?: string;
+  holderName?: string;
+  expiry?: string;
+
+  masked?: boolean;
 };
 
 function KryptPayLogo() {
@@ -12,7 +18,7 @@ function KryptPayLogo() {
     <div className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-300/30 bg-gradient-to-br from-emerald-300 via-cyan-300 to-emerald-500 shadow-lg shadow-emerald-500/20">
       <div className="absolute inset-[3px] rounded-[0.85rem] bg-black/80" />
       <span className="relative bg-gradient-to-br from-emerald-200 to-cyan-200 bg-clip-text text-sm font-black tracking-tight text-transparent">
-        GP
+        KP
       </span>
     </div>
   );
@@ -21,6 +27,12 @@ function KryptPayLogo() {
 export function KryptPayCard({
   variant = "virtual",
   className = "",
+
+  cardNumber = "4732123456789012",
+  holderName = "Wallet User",
+  expiry = "12/29",
+
+  masked = true,
 }: KryptPayCardProps) {
   const isPhysical = variant === "physical";
 
@@ -47,14 +59,17 @@ export function KryptPayCard({
           <KryptPayLogo />
         </div>
 
-        <div className="flex items-center justify-between">
-          <div className="h-11 w-14 rounded-xl border border-yellow-200/40 bg-gradient-to-br from-yellow-200 via-yellow-500 to-yellow-900 shadow-lg" />
-          <Wifi className="h-6 w-6 rotate-90 text-white/70" />
-        </div>
+        <div className="flex justify-end">
+  <Wifi className="h-6 w-6 rotate-90 text-white/70" />
+</div>
 
         <div>
           <p className="truncate text-base tracking-[0.22em] text-white sm:text-xl sm:tracking-[0.28em] lg:text-2xl lg:tracking-[0.32em]">
-            4892 •••• •••• 0928
+            {
+  masked
+    ? `•••• •••• •••• ${cardNumber.slice(-4)}`
+    : cardNumber.replace(/(.{4})/g, "$1 ").trim()
+}
           </p>
 
           <div className="mt-6 flex items-end justify-between">
@@ -62,14 +77,14 @@ export function KryptPayCard({
               <p className="text-[10px] uppercase tracking-[0.25em] text-zinc-500">
                 Card Holder
               </p>
-              <p className="mt-1 text-sm font-medium">Wallet User</p>
+              <p className="mt-1 text-sm font-medium">{holderName}</p>
             </div>
 
             <div className="text-right">
               <p className="text-[10px] uppercase tracking-[0.25em] text-zinc-500">
                 Valid
               </p>
-              <p className="mt-1 text-sm font-medium">12/30</p>
+              <p className="mt-1 text-sm font-medium">{expiry}</p>
             </div>
           </div>
         </div>

@@ -153,12 +153,36 @@ const loadedCards = await Promise.all(
             </section>
 
             <section className="grid gap-6 xl:grid-cols-2">
-              {cards.map((card) => (
+              {cards.map((card) => {
+  const matchingOrder = orders.find(
+    (order) => order.vaultCardId === card.cardId.toString(),
+  );
+
+  return (
                 <div
                   key={card.cardId.toString()}
                   className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5"
                 >
-                  <KryptPayCard variant={cardVariant(card.cardType)} />
+
+<KryptPayCard
+  variant={cardVariant(card.cardType)}
+  cardNumber={
+    matchingOrder?.inventoryCard?.cardNumber ??
+    "0000000000004732"
+  }
+  holderName={
+    matchingOrder?.cardHolderName ??
+    "Wallet User"
+  }
+  expiry={
+    matchingOrder?.inventoryCard
+      ? `${String(matchingOrder.inventoryCard.expiryMonth).padStart(2, "0")}/${String(
+          matchingOrder.inventoryCard.expiryYear,
+        ).slice(-2)}`
+      : "12/29"
+  }
+  masked
+/>
 
                   <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div>
@@ -234,7 +258,9 @@ const loadedCards = await Promise.all(
                     </Link>
                   </div>
                 </div>
-              ))}
+                  );
+})}
+              
             </section>
           </>
         )}
