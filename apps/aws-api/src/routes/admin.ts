@@ -6,6 +6,8 @@ import { requireAdmin } from "../middleware/adminAuth.js";
 import {
   getCardPricesOnchain,
   setCardPriceOnchain,
+   getEthUsdPriceOnchain,
+  setEthUsdPriceOnchain,
 } from "../services/marketplacePriceContractService.js";
 
 export const adminRouter = Router();
@@ -144,6 +146,43 @@ adminRouter.patch("/card-prices/:cardType", requireAdmin, async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to update card price.",
+    });
+  }
+});
+
+adminRouter.get("/eth-usd-price", requireAdmin, async (req, res) => {
+  try {
+    const price = await getEthUsdPriceOnchain();
+
+    return res.json({
+      success: true,
+      price,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load ETH/USD price.",
+    });
+  }
+});
+
+adminRouter.patch("/eth-usd-price", requireAdmin, async (req, res) => {
+  try {
+    const priceUsd = Number(req.body.priceUsd);
+    const result = await setEthUsdPriceOnchain(priceUsd);
+
+    return res.json({
+      success: true,
+      result,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update ETH/USD price.",
     });
   }
 });

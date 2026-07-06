@@ -110,7 +110,7 @@ export function CardProductCard({
       const cardTypeValue = CARD_TYPE_VALUE[cardType];
       const priceUsd = (await getFinalCardPriceUsd(cardTypeValue, "")) as bigint;
 
-      setLivePrice(Number(formatUnits(priceUsd, 18)));
+      setLivePrice(Number(priceUsd));
     } catch (error) {
       console.error("Failed to load live card price:", error);
       setLivePrice(priceEth);
@@ -217,7 +217,7 @@ const [ethDisplayPrice, setEthDisplayPrice] = useState<string | null>(null);
         coupon,
       )) as bigint;
 
-      const nextPrice = Number(formatUnits(priceUsd, 18));
+      const nextPrice = Number(priceUsd);
       setLiveFinalPriceUsd(nextPrice);
 
       if (paymentChoice === "eth") {

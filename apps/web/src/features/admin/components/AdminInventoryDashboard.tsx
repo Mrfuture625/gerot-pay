@@ -5,8 +5,10 @@ import {
   getAdminInventory,
   getAdminBatches,
   importCardCsv,
-   getAdminCardPrices,
+  getAdminCardPrices,
   updateAdminCardPrice,
+  getAdminEthUsdPrice,
+  updateAdminEthUsdPrice,
 } from "@/lib/services/adminService";
 
 type InventoryResponse = {
@@ -35,33 +37,70 @@ export function AdminInventoryDashboard() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [prices, setPrices] = useState({ virtual: "", physical: "" });
 const [savingPrice, setSavingPrice] = useState<"virtual" | "physical" | null>(null);
+const [ethUsdPrice, setEthUsdPrice] = useState("");
+const [savingEthPrice, setSavingEthPrice] = useState(false);
 
   async function loadData() {
-    setLoading(true);
+  setLoading(true);
+
+  try {
+    const inventoryData = await getAdminInventory();
+    setInventory(inventoryData);
+
+    const batchData = await getAdminBatches();
+    setBatches(batchData.batches);
 
     try {
-      const [inventoryData, batchData, priceData] = await Promise.all([
-      getAdminInventory(),
-      getAdminBatches(),
-      getAdminCardPrices(),
-    ]);
-
-      setInventory(inventoryData);
-      setBatches(batchData.batches);
+      const priceData = await getAdminCardPrices();
       setPrices({
-  virtual: String(priceData.prices.virtual),
-  physical: String(priceData.prices.physical),
-});
-    } catch (err) {
-      console.error(err);
+        virtual: String(priceData.prices.virtual),
+        physical: String(priceData.prices.physical),
+      });
+    }
+    catch (priceError) {
+      console.error("Failed to load on-chain prices:", priceError);
     }
 
-    setLoading(false);
+    try {
+      const ethUsdPriceData = await getAdminEthUsdPrice();
+      setEthUsdPrice(String(ethUsdPriceData.price));
+    } catch (ethUsdPriceError) {
+      console.error("Failed to load ETH/USD price:", ethUsdPriceError);
+    }
+  } catch (err) {
+    console.error("Failed to load inventory:", err);
   }
+
+  setLoading(false);
+}
 
   useEffect(() => {
     loadData();
   }, []);
+
+async function handleUpdateEthUsdPrice() {
+  const priceUsd = Number(ethUsdPrice);
+
+  if (!priceUsd || priceUsd <= 0) {
+    alert("Please enter a valid ETH/USD price.");
+    return;
+  }
+
+  setSavingEthPrice(true);
+
+  try {
+    const result = await updateAdminEthUsdPrice(priceUsd);
+
+    alert(`ETH/USD price updated to $${priceUsd}\nTx: ${result.result.txHash}`);
+
+    await loadData();
+  } catch (err) {
+    console.error(err);
+    alert("Failed to update ETH/USD price.");
+  }
+
+  setSavingEthPrice(false);
+}
 
   async function handleUpdatePrice(cardType: "virtual" | "physical") {
   const priceUsd = Number(prices[cardType]);
@@ -157,7 +196,7 @@ const [savingPrice, setSavingPrice] = useState<"virtual" | "physical" | null>(nu
     onChange={(e) =>
       setPrices((prev) => ({ ...prev, virtual: e.target.value }))
     }
-    className="w-full rounded-xl border px-4 py-3 text-black"
+    className="w-full rounded-xl border border-white/20 bg-black px-4 py-3 text-white"
   />
 
   <button
@@ -196,7 +235,7 @@ const [savingPrice, setSavingPrice] = useState<"virtual" | "physical" | null>(nu
     onChange={(e) =>
       setPrices((prev) => ({ ...prev, physical: e.target.value }))
     }
-    className="w-full rounded-xl border px-4 py-3 text-black"
+    className="w-full rounded-xl border border-white/20 bg-black px-4 py-3 text-white"
   />
 
   <button
@@ -210,8 +249,33 @@ const [savingPrice, setSavingPrice] = useState<"virtual" | "physical" | null>(nu
 </div>
 
         </div>
-
       </div>
+
+<div className="rounded-2xl border p-6">
+  <h2 className="text-xl font-semibold">ETH/USD Price</h2>
+
+  <div className="mt-5 space-y-2">
+    <label className="block text-sm font-medium">
+      On-chain ETH/USD Price
+    </label>
+
+    <input
+      type="number"
+      value={ethUsdPrice}
+      onChange={(e) => setEthUsdPrice(e.target.value)}
+      className="w-full rounded-xl border border-white/20 bg-black px-4 py-3 text-white"
+    />
+
+    <button
+      type="button"
+      onClick={handleUpdateEthUsdPrice}
+      disabled={savingEthPrice}
+      className="rounded-xl bg-emerald-500 px-5 py-2 font-semibold text-black disabled:opacity-60"
+    >
+      {savingEthPrice ? "Updating..." : "Update ETH/USD Price"}
+    </button>
+  </div>
+</div>
 
       <div className="rounded-2xl border p-6 space-y-4">
         <h2 className="text-2xl font-semibold">

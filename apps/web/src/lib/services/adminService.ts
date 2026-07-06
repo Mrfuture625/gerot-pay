@@ -190,3 +190,33 @@ export async function updateAdminCardPrice(
 
   return response.json();
 }
+
+export async function getAdminEthUsdPrice() {
+  const response = await fetch(`${apiUrl}/admin/eth-usd-price`, {
+    headers: adminHeaders(),
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to load ETH/USD price");
+  }
+
+  return response.json();
+}
+
+export async function updateAdminEthUsdPrice(priceUsd: number) {
+  const response = await fetch(`${apiUrl}/admin/eth-usd-price`, {
+    method: "PATCH",
+    headers: {
+      ...adminHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ priceUsd }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to update ETH/USD price");
+  }
+
+  return response.json();
+}

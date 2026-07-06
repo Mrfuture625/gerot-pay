@@ -97,3 +97,39 @@ export async function setCardPriceOnchain(cardType: string, priceUsd: number) {
     priceUsd: roundedPrice,
   };
 }
+
+export async function getEthUsdPriceOnchain() {
+  const { publicClient } = getClients();
+
+  const price = await publicClient.readContract({
+    address: KRYPTPAY_CONTRACTS.cardMarketplace,
+    abi: MARKETPLACE_ABI,
+    functionName: "ethUsdPrice",
+  });
+
+  return Number(price);
+}
+
+export async function setEthUsdPriceOnchain(priceUsd: number) {
+  if (!Number.isFinite(priceUsd) || priceUsd <= 0) {
+    throw new Error("Invalid ETH/USD price");
+  }
+
+  const roundedPrice = Math.round(priceUsd);
+  const { publicClient, walletClient } = getClients();
+
+  const hash = await walletClient.writeContract({
+    address: KRYPTPAY_CONTRACTS.cardMarketplace,
+    abi: MARKETPLACE_ABI,
+    functionName: "setEthUsdPrice",
+    args: [BigInt(roundedPrice)],
+  });
+
+  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+
+  return {
+    txHash: hash,
+    status: receipt.status,
+    priceUsd: roundedPrice,
+  };
+}
