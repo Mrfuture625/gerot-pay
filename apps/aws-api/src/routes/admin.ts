@@ -3,6 +3,10 @@ import multer from "multer";
 import { prisma } from "../config/prisma.js";
 import { importCardCsv } from "../services/cardCsvImportService.js";
 import { requireAdmin } from "../middleware/adminAuth.js";
+import {
+  getCardPricesOnchain,
+  setCardPriceOnchain,
+} from "../services/marketplacePriceContractService.js";
 
 export const adminRouter = Router();
 
@@ -101,6 +105,45 @@ adminRouter.get("/inventory/batches", requireAdmin, async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to load batches.",
+    });
+  }
+});
+
+adminRouter.get("/card-prices", requireAdmin, async (req, res) => {
+  try {
+    const prices = await getCardPricesOnchain();
+
+    return res.json({
+      success: true,
+      prices,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load card prices.",
+    });
+  }
+});
+
+adminRouter.patch("/card-prices/:cardType", requireAdmin, async (req, res) => {
+  try {
+    const cardType = String(req.params.cardType);
+    const priceUsd = Number(req.body.priceUsd);
+
+    const result = await setCardPriceOnchain(cardType, priceUsd);
+
+    return res.json({
+      success: true,
+      result,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update card price.",
     });
   }
 });

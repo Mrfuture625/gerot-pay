@@ -5,6 +5,8 @@ import {
   getAdminInventory,
   getAdminBatches,
   importCardCsv,
+   getAdminCardPrices,
+  updateAdminCardPrice,
 } from "@/lib/services/adminService";
 
 type InventoryResponse = {
@@ -31,18 +33,25 @@ export function AdminInventoryDashboard() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [prices, setPrices] = useState({ virtual: "", physical: "" });
+const [savingPrice, setSavingPrice] = useState<"virtual" | "physical" | null>(null);
 
   async function loadData() {
     setLoading(true);
 
     try {
-      const [inventoryData, batchData] = await Promise.all([
-        getAdminInventory(),
-        getAdminBatches(),
-      ]);
+      const [inventoryData, batchData, priceData] = await Promise.all([
+      getAdminInventory(),
+      getAdminBatches(),
+      getAdminCardPrices(),
+    ]);
 
       setInventory(inventoryData);
       setBatches(batchData.batches);
+      setPrices({
+  virtual: String(priceData.prices.virtual),
+  physical: String(priceData.prices.physical),
+});
     } catch (err) {
       console.error(err);
     }
@@ -53,6 +62,32 @@ export function AdminInventoryDashboard() {
   useEffect(() => {
     loadData();
   }, []);
+
+  async function handleUpdatePrice(cardType: "virtual" | "physical") {
+  const priceUsd = Number(prices[cardType]);
+
+  if (!priceUsd || priceUsd <= 0) {
+    alert("Please enter a valid price.");
+    return;
+  }
+
+  setSavingPrice(cardType);
+
+  try {
+    const result = await updateAdminCardPrice(cardType, priceUsd);
+
+    alert(
+      `${cardType} card price updated to $${priceUsd}\nTx: ${result.result.txHash}`,
+    );
+
+    await loadData();
+  } catch (err) {
+    console.error(err);
+    alert("Failed to update card price.");
+  }
+
+  setSavingPrice(null);
+}
 
   async function handleUpload() {
   console.log("Upload clicked", selectedFile);
@@ -110,8 +145,33 @@ export function AdminInventoryDashboard() {
           <p>
             Sold: {inventory?.virtual.sold}
           </p>
-        </div>
 
+          <div className="mt-5 space-y-2">
+  <label className="block text-sm font-medium">
+    On-chain Price USD
+  </label>
+
+  <input
+    type="number"
+    value={prices.virtual}
+    onChange={(e) =>
+      setPrices((prev) => ({ ...prev, virtual: e.target.value }))
+    }
+    className="w-full rounded-xl border px-4 py-3 text-black"
+  />
+
+  <button
+    type="button"
+    onClick={() => handleUpdatePrice("virtual")}
+    disabled={savingPrice === "virtual"}
+    className="rounded-xl bg-emerald-500 px-5 py-2 font-semibold text-black disabled:opacity-60"
+  >
+    {savingPrice === "virtual" ? "Updating..." : "Update Virtual Price"}
+  </button>
+</div>
+
+        </div>
+           
         <div className="rounded-2xl border p-6">
           <h2 className="text-xl font-semibold">
             Physical Cards
@@ -124,6 +184,31 @@ export function AdminInventoryDashboard() {
           <p>
             Sold: {inventory?.physical.sold}
           </p>
+
+          <div className="mt-5 space-y-2">
+  <label className="block text-sm font-medium">
+    On-chain Price USD
+  </label>
+
+  <input
+    type="number"
+    value={prices.physical}
+    onChange={(e) =>
+      setPrices((prev) => ({ ...prev, physical: e.target.value }))
+    }
+    className="w-full rounded-xl border px-4 py-3 text-black"
+  />
+
+  <button
+    type="button"
+    onClick={() => handleUpdatePrice("physical")}
+    disabled={savingPrice === "physical"}
+    className="rounded-xl bg-emerald-500 px-5 py-2 font-semibold text-black disabled:opacity-60"
+  >
+    {savingPrice === "physical" ? "Updating..." : "Update Physical Price"}
+  </button>
+</div>
+
         </div>
 
       </div>

@@ -157,3 +157,36 @@ export async function redeemCoupon(code: string) {
 
   return response.json();
 }
+
+export async function getAdminCardPrices() {
+  const response = await fetch(`${apiUrl}/admin/card-prices`, {
+    headers: adminHeaders(),
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to load card prices");
+  }
+
+  return response.json();
+}
+
+export async function updateAdminCardPrice(
+  cardType: "virtual" | "physical",
+  priceUsd: number,
+) {
+  const response = await fetch(`${apiUrl}/admin/card-prices/${cardType}`, {
+    method: "PATCH",
+    headers: {
+      ...adminHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ priceUsd }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to update card price");
+  }
+
+  return response.json();
+}
