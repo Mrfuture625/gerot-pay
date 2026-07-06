@@ -1,11 +1,14 @@
 import "dotenv/config";
-import { createPublicClient, createWalletClient, http, parseEventLogs } from "viem";
+import { createPublicClient, createWalletClient, http } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { sepolia } from "viem/chains";
 import { KRYPTPAY_CONTRACTS, MARKETPLACE_ABI } from "@kryptpay/contracts";
 
 const rpcUrl = process.env.RPC_URL;
-const privateKey = process.env.MARKETPLACE_OWNER_PRIVATE_KEY as `0x${string}` | undefined;
+const privateKey = (
+  process.env.MARKETPLACE_OWNER_PRIVATE_KEY ||
+  process.env.REWARD_MANAGER_PRIVATE_KEY
+) as `0x${string}` | undefined;
 
 function getClients() {
   if (!rpcUrl) throw new Error("RPC_URL is required");
@@ -14,8 +17,16 @@ function getClients() {
   const account = privateKeyToAccount(privateKey);
 
   return {
-    publicClient: createPublicClient({ chain: sepolia, transport: http(rpcUrl) }),
-    walletClient: createWalletClient({ account, chain: sepolia, transport: http(rpcUrl) }),
+    account,
+    publicClient: createPublicClient({
+      chain: sepolia,
+      transport: http(rpcUrl),
+    }),
+    walletClient: createWalletClient({
+      account,
+      chain: sepolia,
+      transport: http(rpcUrl),
+    }),
   };
 }
 
@@ -40,10 +51,17 @@ export async function createCouponOnchain(input: {
   expiresAt: Date | string | null;
   appliesTo: string;
 }) {
-  const { publicClient, walletClient } = getClients();
+  const { account, publicClient, walletClient } = getClients();
   const { virtualAllowed, physicalAllowed } = couponTargetFlags(input.appliesTo);
 
-  const hash = await walletClient.writeContract({
+  console.log("=== Creating coupon on-chain ===");
+  console.log("Contract:", KRYPTPAY_CONTRACTS.cardMarketplace);
+  console.log("Owner:", account.address);
+  console.log("Code:", input.code);
+  console.log("Discount:", input.discountPercent);
+
+  const { request, result } = await publicClient.simulateContract({
+    account,
     address: KRYPTPAY_CONTRACTS.cardMarketplace,
     abi: MARKETPLACE_ABI,
     functionName: "createCoupon",
@@ -57,17 +75,18 @@ export async function createCouponOnchain(input: {
     ],
   });
 
+  const hash = await walletClient.writeContract(request);
+
+  console.log("Coupon tx:", hash);
+  console.log("Coupon id:", result.toString());
+
   const receipt = await publicClient.waitForTransactionReceipt({ hash });
 
-  const logs = parseEventLogs({
-    abi: MARKETPLACE_ABI,
-    logs: receipt.logs,
-    eventName: "CouponCreated",
-  });
+  console.log("Receipt status:", receipt.status);
 
   return {
     txHash: hash,
-    couponId: logs[0]?.args.couponId?.toString() ?? null,
+    couponId: result.toString(),
   };
 }
 
