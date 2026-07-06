@@ -29,9 +29,10 @@ import {
 import { getSavedReferrer } from "@/features/referral/referralStorage";
 import { appToast } from "@/lib/toast";
 import { createOrder } from "@/lib/services/orderService";
-import { getUserCardIds } from "@/lib/services/vaultService";
 import { CardType, PaymentToken } from "@kryptpay/shared-types";
 import { formatUnits } from "viem";
+import { decodeEventLog } from "viem";
+import { MARKETPLACE_ABI } from "@kryptpay/contracts";
 
 type CardProductCardProps = {
   id: string;
@@ -110,7 +111,7 @@ export function CardProductCard({
       const cardTypeValue = CARD_TYPE_VALUE[cardType];
       const priceUsd = (await getFinalCardPriceUsd(cardTypeValue, "")) as bigint;
 
-      setLivePrice(Number(priceUsd));
+      setLivePrice(Number(formatUnits(priceUsd, 18)));
     } catch (error) {
       console.error("Failed to load live card price:", error);
       setLivePrice(priceEth);
@@ -210,14 +211,14 @@ const [ethDisplayPrice, setEthDisplayPrice] = useState<string | null>(null);
   async function loadLivePrice() {
     try {
       const cardTypeValue = CARD_TYPE_VALUE[cardType];
-      const coupon = appliedCoupon ? couponCode.trim() : "";
+      const coupon = appliedCoupon ? appliedCoupon.coupon.code.trim().toUpperCase() : "";
 
       const priceUsd = (await getFinalCardPriceUsd(
         cardTypeValue,
         coupon,
       )) as bigint;
 
-      const nextPrice = Number(priceUsd);
+      const nextPrice = Number(formatUnits(priceUsd, 18));
       setLiveFinalPriceUsd(nextPrice);
 
       if (paymentChoice === "eth") {
@@ -234,7 +235,7 @@ const [ethDisplayPrice, setEthDisplayPrice] = useState<string | null>(null);
   }
 
   loadLivePrice();
-}, [cardType, appliedCoupon, paymentChoice, price]);
+}, [cardType, appliedCoupon, couponCode, paymentChoice, price]);
 
   async function applyCoupon() {
   try {
@@ -243,6 +244,9 @@ const [ethDisplayPrice, setEthDisplayPrice] = useState<string | null>(null);
       cardType,
       orderAmount: price,
     });
+
+    // Normalize the coupon code from the API
+    setCouponCode(result.coupon.code.trim().toUpperCase());
 
     setAppliedCoupon({
       coupon: result.coupon,
@@ -294,49 +298,73 @@ const [ethDisplayPrice, setEthDisplayPrice] = useState<string | null>(null);
   try {
     const cardTypeValue = CARD_TYPE_VALUE[cardType];
     const paymentTokenValue = PAYMENT_TOKEN_VALUE[paymentChoice];
-    const coupon = appliedCoupon ? couponCode.trim() : "";
+    const coupon = appliedCoupon ? appliedCoupon.coupon.code.trim().toUpperCase() : "";
 
     const finalPriceUsd = await getFinalCardPriceUsd(cardTypeValue, coupon);
 
     let txHash: `0x${string}`;
 
-    if (paymentChoice === "eth") {
-      const ethValue = await getEthAmountForUsd(finalPriceUsd as bigint);
+if (paymentChoice === "eth") {
+  const ethAmount = (await getEthAmountForUsd(
+    finalPriceUsd as bigint,
+  )) as bigint;
 
-      txHash = await buyCardOnchain({
-        cardType: cardTypeValue,
-        paymentToken: paymentTokenValue,
-        couponCode: coupon,
-        ethValue: ethValue as bigint,
-      });
+  txHash = await buyCardOnchain({
+    cardType: cardTypeValue,
+    paymentToken: PAYMENT_TOKEN_VALUE.eth,
+    couponCode: coupon,
+    ethValue: ethAmount,
+  });
+} else {
+  const stableAmount = getStableAmountForUsd(finalPriceUsd as bigint);
 
-      await waitForTransactionReceipt(config, { hash: txHash });
-    } else {
-      const stableAmount = getStableAmountForUsd(finalPriceUsd as bigint);
+  const stableToken =
+    paymentChoice === "usdc"
+      ? await getUsdcToken()
+      : await getUsdtToken();
 
-      const stableToken =
-        paymentChoice === "usdc" ? await getUsdcToken() : await getUsdtToken();
+  const approvalHash = await approveStableToken(
+    stableToken as `0x${string}`,
+    stableAmount,
+  );
 
-      const approvalHash = await approveStableToken(
-        stableToken as `0x${string}`,
-        stableAmount,
-      );
+  await waitForTransactionReceipt(config, {
+    hash: approvalHash,
+  });
 
-      await waitForTransactionReceipt(config, { hash: approvalHash });
+  txHash = await buyCardOnchain({
+    cardType: cardTypeValue,
+    paymentToken: PAYMENT_TOKEN_VALUE[paymentChoice],
+    couponCode: coupon,
+  });
+}
 
-      txHash = await buyCardOnchain({
-        cardType: cardTypeValue,
-        paymentToken: paymentTokenValue,
-        couponCode: coupon,
-      });
+const receipt = await waitForTransactionReceipt(config, {
+  hash: txHash,
+});
 
-      await waitForTransactionReceipt(config, { hash: txHash });
+let latestVaultCardId: string | null = null;
+
+for (const log of receipt.logs) {
+  try {
+    const decoded = decodeEventLog({
+      abi: MARKETPLACE_ABI,
+      data: log.data,
+      topics: log.topics,
+    });
+
+    if (decoded.eventName === "CardPurchased") {
+      latestVaultCardId = decoded.args.vaultCardId.toString();
+      break;
     }
+  } catch {
+    // Ignore logs from other contracts.
+  }
+}
 
-    const cardIds = (await getUserCardIds(walletAddress)) as bigint[];
-    const latestVaultCardId = cardIds.length
-      ? cardIds[cardIds.length - 1].toString()
-      : undefined;
+if (!latestVaultCardId) {
+  throw new Error("Vault card ID not found in purchase event.");
+}
 
     await createOrder({
       walletAddress,
