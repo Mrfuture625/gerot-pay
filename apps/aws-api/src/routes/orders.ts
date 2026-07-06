@@ -107,15 +107,27 @@ ordersRouter.post("/", async (req, res) => {
       let vaultCard = null;
 
       if (vaultCardId) {
-        vaultCard = await tx.vaultCard.create({
-          data: {
-            walletAddress: normalizedWallet,
-            vaultCardId: BigInt(vaultCardId),
-            cardType: normalizedCardType,
-            orderId: order.id,
-          },
-        });
-      }
+  vaultCard = await tx.vaultCard.upsert({
+    where: {
+      vaultCardId: BigInt(vaultCardId),
+    },
+    update: {
+      walletAddress: normalizedWallet,
+      cardType: normalizedCardType,
+      orderId: order.id,
+      active: true,
+      frozen: false,
+    },
+    create: {
+      walletAddress: normalizedWallet,
+      vaultCardId: BigInt(vaultCardId),
+      cardType: normalizedCardType,
+      orderId: order.id,
+      active: true,
+      frozen: false,
+    },
+  });
+}
 
       return {
         order,
