@@ -220,3 +220,38 @@ export async function updateAdminEthUsdPrice(priceUsd: number) {
 
   return response.json();
 }
+
+export async function getAdminRewardSettings() {
+  const response = await fetch(`${apiUrl}/admin/reward-settings`, {
+    headers: adminHeaders(),
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to load reward settings");
+  }
+
+  return response.json();
+}
+
+export async function updateAdminRewardSettings(data: {
+  signupReward: number;
+  referralReward: number;
+  virtualCardReward: number;
+  physicalCardReward: number;
+}) {
+  const response = await fetch(`${apiUrl}/admin/reward-settings`, {
+    method: "PATCH",
+    headers: {
+      ...adminHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to update reward settings");
+  }
+
+  return response.json();
+}

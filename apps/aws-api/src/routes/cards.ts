@@ -50,6 +50,7 @@ cardsRouter.get("/:walletAddress", async (req, res) => {
           createdAt: card.createdAt,
           orderId: card.orderId,
           txHash: card.order?.txHash ?? null,
+          cardHolderName: card.order?.cardHolderName ?? null,
           last4: cardNumber ? cardNumber.slice(-4) : null,
           expiryMonth: inventoryCard?.expiryMonth ?? null,
           expiryYear: inventoryCard?.expiryYear ?? null,

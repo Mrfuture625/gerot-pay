@@ -279,14 +279,14 @@ await saveReload({
           No Vault cards found for this wallet yet.
         </section>
       ) : (
-        <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <div className="space-y-6">
-            <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
+        <section className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+          <div className="min-w-0 space-y-6">
+            <div className="min-w-0 overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04] p-3 sm:p-5">
               <p className="mb-5 text-sm uppercase tracking-[0.25em] text-emerald-300">
                 Choose Card
               </p>
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid min-w-0 gap-4 sm:grid-cols-2">
                 {cards.map((card) => {
                   const selected = selectedCard?.cardId === card.cardId;
 
@@ -294,16 +294,25 @@ await saveReload({
                     <button
                       key={card.cardId.toString()}
                       onClick={() => setSelectedCardId(card.cardId)}
-                      className={`rounded-[2rem] border p-4 text-left transition ${
+                      className={`min-w-0 w-full overflow-hidden rounded-[2rem] border p-3 text-left transition ${
                         selected
                           ? "border-emerald-400/40 bg-emerald-400/10"
                           : "border-white/10 bg-black/25 hover:border-white/20"
                       }`}
                     >
                       <KryptPayCard
-                        variant={cardVariant(card.cardType)}
-                        className="max-w-[280px] rounded-[1.5rem] sm:max-w-[360px]"
-                      />
+  variant={cardVariant(card.cardType)}
+  last4={card.savedCard?.last4 ?? undefined}
+  holderName={card.savedCard?.cardHolderName ?? "Wallet User"}
+  expiry={
+    card.savedCard?.expiryMonth && card.savedCard?.expiryYear
+      ? `${String(card.savedCard.expiryMonth).padStart(2, "0")}/${String(
+          card.savedCard.expiryYear,
+        ).slice(-2)}`
+      : undefined
+  }
+  className="w-full min-w-0 rounded-[1.25rem]"
+/>
 
                       <div className="mt-4 flex items-center justify-between">
                         <div>

@@ -9,6 +9,10 @@ import {
    getEthUsdPriceOnchain,
   setEthUsdPriceOnchain,
 } from "../services/marketplacePriceContractService.js";
+import {
+  getRewardSettingsOnchain,
+  setRewardAmountsOnchain,
+} from "../services/rewardSettingsContractService.js";
 
 export const adminRouter = Router();
 
@@ -183,6 +187,47 @@ adminRouter.patch("/eth-usd-price", requireAdmin, async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to update ETH/USD price.",
+    });
+  }
+});
+
+adminRouter.get("/reward-settings", requireAdmin, async (req, res) => {
+  try {
+    const settings = await getRewardSettingsOnchain();
+
+    return res.json({
+      success: true,
+      settings,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load reward settings.",
+    });
+  }
+});
+
+adminRouter.patch("/reward-settings", requireAdmin, async (req, res) => {
+  try {
+    const result = await setRewardAmountsOnchain({
+      signupReward: Number(req.body.signupReward),
+      referralReward: Number(req.body.referralReward),
+      virtualCardReward: Number(req.body.virtualCardReward),
+      physicalCardReward: Number(req.body.physicalCardReward),
+    });
+
+    return res.json({
+      success: true,
+      result,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update reward settings.",
     });
   }
 });

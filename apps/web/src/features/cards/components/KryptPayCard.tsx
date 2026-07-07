@@ -6,6 +6,7 @@ type KryptPayCardProps = {
   variant?: "virtual" | "physical";
   className?: string;
   cardNumber?: string;
+  last4?: string;
   holderName?: string;
   expiry?: string;
   masked?: boolean;
@@ -34,7 +35,8 @@ function KryptPayLogo() {
 export function KryptPayCard({
   variant = "virtual",
   className = "",
-  cardNumber = "0000000000004732",
+  cardNumber,
+last4 = "4732",
   holderName = "Wallet User",
   expiry = "12/29",
   masked = true,
@@ -43,7 +45,7 @@ export function KryptPayCard({
 
   return (
     <div
-      className={`group relative mx-auto aspect-[1.58/1] w-full max-w-[460px] overflow-hidden rounded-[1.5rem] border border-white/15 bg-gradient-to-br from-zinc-950 via-zinc-900 to-black p-6 shadow-2xl shadow-emerald-950/30 transition duration-500 hover:-translate-y-1 sm:rounded-[2rem] ${className}`}
+      className={`group relative aspect-[1.58/1] w-full min-w-0 overflow-hidden rounded-[1.5rem] border border-white/15 bg-gradient-to-br from-zinc-950 via-zinc-900 to-black p-4 shadow-2xl shadow-emerald-950/30 transition duration-500 hover:-translate-y-1 sm:max-w-[460px] sm:rounded-[2rem] sm:p-6 ${className}`}
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.18),transparent_22%),radial-gradient(circle_at_80%_10%,rgba(16,185,129,0.32),transparent_28%),radial-gradient(circle_at_75%_90%,rgba(34,211,238,0.2),transparent_30%)]" />
       <div className="absolute -left-20 top-0 h-40 w-40 rounded-full bg-emerald-400/20 blur-3xl" />
@@ -67,7 +69,10 @@ export function KryptPayCard({
 
         <div>
           <p className="truncate text-lg tracking-[0.18em] text-white sm:text-xl sm:tracking-[0.24em] lg:text-2xl lg:tracking-[0.28em]">
-            {formatCardNumber(cardNumber, masked)}
+            {formatCardNumber(
+  cardNumber ?? `000000000000${last4}`,
+  masked,
+)}
           </p>
 
           <div className="mt-5 flex items-end justify-between gap-4">

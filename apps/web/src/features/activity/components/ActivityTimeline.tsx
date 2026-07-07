@@ -107,8 +107,8 @@ export function ActivityTimeline() {
         client.getLogs({
           address: KRYPTPAY_CONTRACTS.cardMarketplace,
           event: parseAbiItem(
-            "event CardPurchased(uint256 indexed purchaseId,address indexed buyer,uint8 indexed cardType,uint8 paymentToken,uint256 originalPriceUsd,uint256 finalPriceUsd,uint256 paidAmount,uint256 couponId,uint256 timestamp)",
-          ),
+  "event CardPurchased(uint256 indexed purchaseId,uint256 indexed vaultCardId,address indexed buyer,uint8 cardType,uint8 paymentToken,uint256 originalPriceUsd,uint256 finalPriceUsd,uint256 paidAmount,uint256 couponId,uint256 timestamp)",
+),
           args: { buyer: address },
           fromBlock,
           toBlock: "latest",
@@ -160,7 +160,7 @@ export function ActivityTimeline() {
           id: `${log.transactionHash}-${log.logIndex}`,
           type: "purchase" as const,
           title: `${cardTypeLabel(Number(log.args.cardType))} Purchased`,
-          detail: `Purchase #${log.args.purchaseId?.toString()}`,
+          detail: `Card #${log.args.vaultCardId?.toString()} • Purchase #${log.args.purchaseId?.toString()}`,
           amount: formatUsd(log.args.finalPriceUsd ?? 0n),
           time: formatTime(log.args.timestamp),
           blockNumber: log.blockNumber ?? 0n,

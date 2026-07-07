@@ -9,6 +9,8 @@ import {
   updateAdminCardPrice,
   getAdminEthUsdPrice,
   updateAdminEthUsdPrice,
+  getAdminRewardSettings,
+updateAdminRewardSettings,
 } from "@/lib/services/adminService";
 
 type InventoryResponse = {
@@ -39,6 +41,14 @@ export function AdminInventoryDashboard() {
 const [savingPrice, setSavingPrice] = useState<"virtual" | "physical" | null>(null);
 const [ethUsdPrice, setEthUsdPrice] = useState("");
 const [savingEthPrice, setSavingEthPrice] = useState(false);
+const [rewardSettings, setRewardSettings] = useState({
+  signupReward: "",
+  referralReward: "",
+  virtualCardReward: "",
+  physicalCardReward: "",
+});
+
+const [savingRewards, setSavingRewards] = useState(false);
 
   async function loadData() {
   setLoading(true);
@@ -60,6 +70,19 @@ const [savingEthPrice, setSavingEthPrice] = useState(false);
     catch (priceError) {
       console.error("Failed to load on-chain prices:", priceError);
     }
+
+try {
+  const rewardData = await getAdminRewardSettings();
+
+  setRewardSettings({
+    signupReward: String(rewardData.settings.signupReward),
+    referralReward: String(rewardData.settings.referralReward),
+    virtualCardReward: String(rewardData.settings.virtualCardReward),
+    physicalCardReward: String(rewardData.settings.physicalCardReward),
+  });
+} catch (rewardError) {
+  console.error("Failed to load reward settings:", rewardError);
+}
 
     try {
       const ethUsdPriceData = await getAdminEthUsdPrice();
@@ -126,6 +149,43 @@ async function handleUpdateEthUsdPrice() {
   }
 
   setSavingPrice(null);
+}
+
+async function handleUpdateRewardSettings() {
+  const signupReward = Number(rewardSettings.signupReward);
+  const referralReward = Number(rewardSettings.referralReward);
+  const virtualCardReward = Number(rewardSettings.virtualCardReward);
+  const physicalCardReward = Number(rewardSettings.physicalCardReward);
+
+  if (
+    signupReward <= 0 ||
+    referralReward <= 0 ||
+    virtualCardReward <= 0 ||
+    physicalCardReward <= 0
+  ) {
+    alert("Please enter valid reward amounts.");
+    return;
+  }
+
+  setSavingRewards(true);
+
+  try {
+    const result = await updateAdminRewardSettings({
+      signupReward,
+      referralReward,
+      virtualCardReward,
+      physicalCardReward,
+    });
+
+    alert(`Reward settings updated.\nTx: ${result.result.txHash}`);
+
+    await loadData();
+  } catch (err) {
+    console.error(err);
+    alert("Failed to update reward settings.");
+  }
+
+  setSavingRewards(false);
 }
 
   async function handleUpload() {
@@ -301,6 +361,81 @@ async function handleUpdateEthUsdPrice() {
   {uploading ? "Uploading..." : "Upload CSV"}
 </button>
       </div>
+
+<div className="rounded-2xl border p-6">
+  <h2 className="text-xl font-semibold">Reward Settings</h2>
+
+  <div className="mt-5 grid gap-4 md:grid-cols-2">
+    <div className="space-y-2">
+      <label className="block text-sm font-medium">Signup Reward KPAY</label>
+      <input
+        type="number"
+        value={rewardSettings.signupReward}
+        onChange={(e) =>
+          setRewardSettings((prev) => ({
+            ...prev,
+            signupReward: e.target.value,
+          }))
+        }
+        className="w-full rounded-xl border border-white/20 bg-black px-4 py-3 text-white"
+      />
+    </div>
+
+    <div className="space-y-2">
+      <label className="block text-sm font-medium">Referral Reward KPAY</label>
+      <input
+        type="number"
+        value={rewardSettings.referralReward}
+        onChange={(e) =>
+          setRewardSettings((prev) => ({
+            ...prev,
+            referralReward: e.target.value,
+          }))
+        }
+        className="w-full rounded-xl border border-white/20 bg-black px-4 py-3 text-white"
+      />
+    </div>
+
+    <div className="space-y-2">
+      <label className="block text-sm font-medium">Virtual Card Reward KPAY</label>
+      <input
+        type="number"
+        value={rewardSettings.virtualCardReward}
+        onChange={(e) =>
+          setRewardSettings((prev) => ({
+            ...prev,
+            virtualCardReward: e.target.value,
+          }))
+        }
+        className="w-full rounded-xl border border-white/20 bg-black px-4 py-3 text-white"
+      />
+    </div>
+
+    <div className="space-y-2">
+      <label className="block text-sm font-medium">Physical Card Reward KPAY</label>
+      <input
+        type="number"
+        value={rewardSettings.physicalCardReward}
+        onChange={(e) =>
+          setRewardSettings((prev) => ({
+            ...prev,
+            physicalCardReward: e.target.value,
+          }))
+        }
+        className="w-full rounded-xl border border-white/20 bg-black px-4 py-3 text-white"
+      />
+    </div>
+  </div>
+
+  <button
+    type="button"
+    onClick={handleUpdateRewardSettings}
+    disabled={savingRewards}
+    className="mt-5 rounded-xl bg-emerald-500 px-5 py-2 font-semibold text-black disabled:opacity-60"
+  >
+    {savingRewards ? "Updating..." : "Update Reward Settings"}
+  </button>
+</div>
 
       <div className="rounded-2xl border p-6">
         <h2 className="mb-4 text-2xl font-semibold">

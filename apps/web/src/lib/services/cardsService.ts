@@ -7,6 +7,7 @@ export type SavedVaultCard = {
   createdAt: string;
   orderId: string | null;
   txHash: string | null;
+  cardHolderName: string | null;
   last4: string | null;
   expiryMonth: string | number | null;
   expiryYear: string | number | null;
