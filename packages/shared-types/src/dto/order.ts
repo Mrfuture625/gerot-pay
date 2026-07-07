@@ -8,6 +8,7 @@ export interface CreateOrderDto {
 
   vaultCardId?: string;
 couponCode?: string;
+referrerWallet?: string | null;
   cardHolderName: string;
   email: string;
 

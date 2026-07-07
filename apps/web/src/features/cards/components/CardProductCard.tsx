@@ -368,6 +368,11 @@ if (!latestVaultCardId) {
 
     await createOrder({
       walletAddress,
+       referrerWallet:
+  savedReferrer &&
+  savedReferrer.toLowerCase() !== walletAddress.toLowerCase()
+    ? savedReferrer
+    : undefined,
       cardType: cardType === "physical" ? CardType.PHYSICAL : CardType.VIRTUAL,
 paymentToken:
   paymentChoice === "eth"
@@ -386,6 +391,7 @@ paymentToken:
       state: stateName || undefined,
       postalCode: postalCode || undefined,
       country: country || undefined,
+
     });
 
     appToast.success("🎉 Purchase successful! Order saved.", "purchase");

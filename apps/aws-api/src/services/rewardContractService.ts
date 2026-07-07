@@ -52,3 +52,45 @@ export async function addSignupRewardOnchain(user: `0x${string}`) {
     createdAt: rewardLog?.args.createdAt?.toString() ?? null,
   };
 }
+
+export async function addVirtualCardRewardOnchain(user: `0x${string}`) {
+  const hash = await walletClient.writeContract({
+    address: KRYPTPAY_CONTRACTS.rewardClaim,
+    abi: REWARD_CLAIM_ABI,
+    functionName: "addVirtualCardReward",
+    args: [user],
+  });
+
+  await publicClient.waitForTransactionReceipt({ hash });
+
+  return { txHash: hash };
+}
+
+export async function addPhysicalCardRewardOnchain(user: `0x${string}`) {
+  const hash = await walletClient.writeContract({
+    address: KRYPTPAY_CONTRACTS.rewardClaim,
+    abi: REWARD_CLAIM_ABI,
+    functionName: "addPhysicalCardReward",
+    args: [user],
+  });
+
+  await publicClient.waitForTransactionReceipt({ hash });
+
+  return { txHash: hash };
+}
+
+export async function addReferralRewardOnchain(
+  referrer: `0x${string}`,
+  referee: `0x${string}`,
+) {
+  const hash = await walletClient.writeContract({
+    address: KRYPTPAY_CONTRACTS.rewardClaim,
+    abi: REWARD_CLAIM_ABI,
+    functionName: "addReferralReward",
+    args: [referrer, referee],
+  });
+
+  await publicClient.waitForTransactionReceipt({ hash });
+
+  return { txHash: hash };
+}

@@ -1,6 +1,11 @@
 import { Router } from "express";
 import { prisma } from "../config/prisma.js";
 import { CardType, PaymentToken } from "../generated/prisma/client.js";
+import {
+  addVirtualCardRewardOnchain,
+  addPhysicalCardRewardOnchain,
+  addReferralRewardOnchain,
+} from "../services/rewardContractService.js";
 
 export const ordersRouter = Router();
 
@@ -21,6 +26,7 @@ ordersRouter.post("/", async (req, res) => {
       country,
       vaultCardId,
       couponCode,
+      referrerWallet,
     } = req.body;
 
     if (
@@ -143,6 +149,47 @@ ordersRouter.post("/", async (req, res) => {
         vaultCard,
       };
     });
+
+try {
+  if (normalizedCardType === CardType.VIRTUAL) {
+    await addVirtualCardRewardOnchain(normalizedWallet as `0x${string}`);
+  } else {
+    await addPhysicalCardRewardOnchain(normalizedWallet as `0x${string}`);
+  }
+} catch (rewardError) {
+  console.error("Failed to add card purchase reward:", rewardError);
+}
+
+try {
+  const normalizedReferrer = referrerWallet
+    ? String(referrerWallet).toLowerCase()
+    : null;
+
+  if (normalizedReferrer && normalizedReferrer !== normalizedWallet) {
+    const existingReferral = await prisma.referral.findUnique({
+      where: {
+        referredWallet: normalizedWallet,
+      },
+    });
+
+    if (!existingReferral) {
+      await prisma.referral.create({
+        data: {
+          referrerWallet: normalizedReferrer,
+          referredWallet: normalizedWallet,
+          rewardAmount: "0",
+        },
+      });
+
+      await addReferralRewardOnchain(
+        normalizedReferrer as `0x${string}`,
+        normalizedWallet as `0x${string}`,
+      );
+    }
+  }
+} catch (referralError) {
+  console.error("Failed to add referral reward:", referralError);
+}
 
     return res.json({
       success: true,
