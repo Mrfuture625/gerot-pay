@@ -8,29 +8,53 @@ cardsRouter.get("/:walletAddress", async (req, res) => {
     const walletAddress = String(req.params.walletAddress).toLowerCase();
 
     const cards = await prisma.vaultCard.findMany({
-      where: {
-        walletAddress,
-      },
+      where: { walletAddress },
       include: {
-        order: true,
+        order: {
+          include: {
+            inventoryCard: true,
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",
       },
     });
 
+    const inventoryByOrderId = await prisma.cardInventory.findMany({
+      where: {
+        assignedWallet: walletAddress,
+      },
+    });
+
+    const inventoryMap = new Map(
+      inventoryByOrderId.map((item) => [item.orderId, item]),
+    );
+
     return res.json({
       success: true,
-      cards: cards.map((card) => ({
-        id: card.id,
-        vaultCardId: card.vaultCardId.toString(),
-        cardType: card.cardType,
-        active: card.active,
-        frozen: card.frozen,
-        createdAt: card.createdAt,
-        orderId: card.orderId,
-        txHash: card.order?.txHash ?? null,
-      })),
+      cards: cards.map((card) => {
+        const inventoryCard =
+          card.order?.inventoryCard ??
+          inventoryMap.get(card.orderId ?? "") ??
+          null;
+
+        const cardNumber = inventoryCard?.cardNumber ?? "";
+
+        return {
+          id: card.id,
+          vaultCardId: card.vaultCardId.toString(),
+          cardType: card.cardType,
+          active: card.active,
+          frozen: card.frozen,
+          createdAt: card.createdAt,
+          orderId: card.orderId,
+          txHash: card.order?.txHash ?? null,
+          last4: cardNumber ? cardNumber.slice(-4) : null,
+          expiryMonth: inventoryCard?.expiryMonth ?? null,
+          expiryYear: inventoryCard?.expiryYear ?? null,
+        };
+      }),
     });
   } catch (error) {
     console.error(error);

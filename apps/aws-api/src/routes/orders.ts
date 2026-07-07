@@ -23,10 +23,18 @@ ordersRouter.post("/", async (req, res) => {
       couponCode,
     } = req.body;
 
-    if (!walletAddress || !cardType || !paymentToken || !txHash || !cardHolderName || !email) {
+    if (
+  !walletAddress ||
+  !cardType ||
+  !paymentToken ||
+  !txHash ||
+  !cardHolderName ||
+  !email ||
+  !vaultCardId
+) {
       return res.status(400).json({
         success: false,
-        message: "Missing required order fields",
+        message: "Missing required order fields or card ID",
       });
     }
 

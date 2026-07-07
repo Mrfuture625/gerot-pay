@@ -1,5 +1,11 @@
 import "dotenv/config";
-import { createPublicClient, createWalletClient, http } from "viem";
+import {
+  createPublicClient,
+  createWalletClient,
+  formatUnits,
+  http,
+  parseUnits,
+} from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { sepolia } from "viem/chains";
 import { KRYPTPAY_CONTRACTS, MARKETPLACE_ABI } from "@kryptpay/contracts";
@@ -65,9 +71,9 @@ export async function getCardPricesOnchain() {
   ]);
 
   return {
-    virtual: Number(virtualPrice),
-    physical: Number(physicalPrice),
-  };
+  virtual: Number(formatUnits(virtualPrice as bigint, 18)),
+  physical: Number(formatUnits(physicalPrice as bigint, 18)),
+};
 }
 
 export async function setCardPriceOnchain(cardType: string, priceUsd: number) {
@@ -85,7 +91,7 @@ export async function setCardPriceOnchain(cardType: string, priceUsd: number) {
     address: KRYPTPAY_CONTRACTS.cardMarketplace,
     abi: MARKETPLACE_ABI,
     functionName: "setCardPrice",
-    args: [CARD_TYPE[type], BigInt(roundedPrice)],
+    args: [CARD_TYPE[type], parseUnits(String(roundedPrice), 18)],
   });
 
   const receipt = await publicClient.waitForTransactionReceipt({ hash });
@@ -107,7 +113,7 @@ export async function getEthUsdPriceOnchain() {
     functionName: "ethUsdPrice",
   });
 
-  return Number(price);
+  return Number(formatUnits(price as bigint, 18));
 }
 
 export async function setEthUsdPriceOnchain(priceUsd: number) {
@@ -122,7 +128,7 @@ export async function setEthUsdPriceOnchain(priceUsd: number) {
     address: KRYPTPAY_CONTRACTS.cardMarketplace,
     abi: MARKETPLACE_ABI,
     functionName: "setEthUsdPrice",
-    args: [BigInt(roundedPrice)],
+    args: [parseUnits(String(roundedPrice), 18)],
   });
 
   const receipt = await publicClient.waitForTransactionReceipt({ hash });

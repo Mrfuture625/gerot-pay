@@ -15,6 +15,10 @@ import {
   getUserCardIds,
   withdrawFromCardOnchain,
 } from "@/lib/services/vaultService";
+import {
+  getCardsByWallet,
+  type SavedVaultCard,
+} from "@/lib/services/cardsService";
 import { appToast } from "@/lib/toast";
 
 type PaymentChoice = "eth" | "usdc" | "usdt";
@@ -52,10 +56,27 @@ function cardVariant(cardType: number): "virtual" | "physical" {
   return cardType === 1 ? "physical" : "virtual";
 }
 
+type DisplayVaultCard = VaultCard & {
+  savedCard?: SavedVaultCard;
+};
+
+function formatCardLast4(card?: SavedVaultCard) {
+  return card?.last4 ? `•••• ${card.last4}` : "Card details pending";
+}
+
+function formatExpiry(card?: SavedVaultCard) {
+  if (!card?.expiryMonth || !card?.expiryYear) return null;
+
+  const month = String(card.expiryMonth).padStart(2, "0");
+  const year = String(card.expiryYear).slice(-2);
+
+  return `Expires ${month}/${year}`;
+}
+
 export function WithdrawFlow() {
   const { address, isConnected } = useAccount();
 
-  const [cards, setCards] = useState<VaultCard[]>([]);
+  const [cards, setCards] = useState<DisplayVaultCard[]>([]);
   const [selectedCardId, setSelectedCardId] = useState<bigint | null>(null);
   const [amount, setAmount] = useState("");
   const [paymentChoice, setPaymentChoice] = useState<PaymentChoice>("usdc");
@@ -112,31 +133,43 @@ export function WithdrawFlow() {
 }, [paymentChoice, amountUsd]);
 
   async function loadCards() {
-    if (!address) return;
+  if (!address) return;
 
-    setLoading(true);
+  setLoading(true);
 
-    try {
-      const ids = (await getUserCardIds(address)) as bigint[];
+  try {
+    const [ids, savedCards] = await Promise.all([
+      getUserCardIds(address) as Promise<bigint[]>,
+      getCardsByWallet(address),
+    ]);
 
-      const loadedCards = await Promise.all(
-        ids.map(async (id) => {
-          return (await getCard(id)) as unknown as VaultCard;
-        }),
-      );
+    const loadedCards = await Promise.all(
+      ids.map(async (id) => {
+        const vaultCard = (await getCard(id)) as unknown as VaultCard;
 
-      setCards(loadedCards);
+        const savedCard = savedCards.find(
+          (card) => card.vaultCardId === id.toString(),
+        );
 
-      if (loadedCards.length && !selectedCardId) {
-        setSelectedCardId(loadedCards[0].cardId);
-      }
-    } catch (error) {
-      console.error(error);
-      appToast.error("Failed to load Vault cards.");
-    } finally {
-      setLoading(false);
+        return {
+          ...vaultCard,
+          savedCard,
+        };
+      }),
+    );
+
+    setCards(loadedCards);
+
+    if (loadedCards.length && !selectedCardId) {
+      setSelectedCardId(loadedCards[0].cardId);
     }
+  } catch (error) {
+    console.error(error);
+    appToast.error("Failed to load Vault cards.");
+  } finally {
+    setLoading(false);
   }
+}
 
   useEffect(() => { 
     loadCards();
@@ -284,6 +317,15 @@ await saveWithdrawal({
                             <p className="font-semibold">
                               {cardName(card.cardType)}
                             </p>
+                            <p className="mt-1 text-sm font-medium text-zinc-300">
+  {formatCardLast4(card.savedCard)}
+</p>
+
+{formatExpiry(card.savedCard) && (
+  <p className="mt-1 text-xs text-zinc-500">
+    {formatExpiry(card.savedCard)}
+  </p>
+)}
                             <p className="mt-1 text-sm text-zinc-500">
                               Balance ${formatUsd(card.balanceUsd)}
                             </p>
