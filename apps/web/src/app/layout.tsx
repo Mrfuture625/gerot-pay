@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { WalletProvider } from "@/features/wallet/providers/WalletProvider";
+import { TelegramTaskPopup } from "@/features/telegram/components/TelegramTaskPopup";
 import "./globals.css";
 import { Toaster } from "sonner";
 
@@ -31,6 +32,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <WalletProvider>
+          <TelegramTaskPopup />
           {children}
           <Toaster richColors position="top-right" />
         </WalletProvider>
