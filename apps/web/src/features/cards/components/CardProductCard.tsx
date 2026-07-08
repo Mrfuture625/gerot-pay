@@ -175,7 +175,7 @@ function PurchaseModal({
   isConnected: boolean;
 }) {
   const isPhysical = cardType === "physical";
-
+const [dialogOpen, setDialogOpen] = useState(false);
   const [paymentChoice, setPaymentChoice] = useState<PaymentChoice>("eth");
   const [couponCode, setCouponCode] = useState("");
   const [couponError, setCouponError] = useState("");
@@ -395,6 +395,7 @@ paymentToken:
     });
 
     appToast.success("🎉 Purchase successful! Order saved.", "purchase");
+    setDialogOpen(false);
   } catch (error) {
     console.error(error);
     appToast.error("Purchase failed or transaction was rejected.", "purchase");
@@ -406,7 +407,7 @@ paymentToken:
 
 
   return (
-    <Dialog>
+    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DialogTrigger asChild>
         <button className="w-full rounded-2xl bg-emerald-400 px-5 py-3 font-semibold text-black transition hover:bg-emerald-300 sm:w-auto">
           Purchase

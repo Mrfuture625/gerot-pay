@@ -19,6 +19,7 @@ import {
   claimAllRewards,
 claimAllInstantRewards,
 getRewardUnlockTime,
+approveInstantClaimFee,
 } from "@/lib/services/rewardService";
 import { appToast } from "@/lib/toast";
 
@@ -83,6 +84,7 @@ export function ClaimRewards() {
   const [unlockedRewardIds, setUnlockedRewardIds] = useState<Set<string>>(new Set());
   const [rewardUnlockTimes, setRewardUnlockTimes] = useState<Record<string, bigint>>({});
   const [claimingAll, setClaimingAll] = useState(false);
+  const [instantClaiming, setInstantClaiming] = useState(false);
   const [now, setNow] = useState(Date.now());
 
   async function loadRewards() {
@@ -197,26 +199,33 @@ await loadRewards();
   }
 
   async function handleInstantClaim(id: bigint) {
-    setClaimingId(id);
+  if (instantClaiming || claimingId) return;
 
-appToast.loading("Waiting for wallet confirmation...", "claim");
+  setInstantClaiming(true);
+  setClaimingId(id);
 
-    try {
-     const hash = await claimInstantReward(id);
-await waitForTransactionReceipt(config, { hash });
-await loadRewards();
+  appToast.loading("Approving instant claim fee...", "claim");
 
-      appToast.success("Reward claimed instantly.", "claim");
-    } catch (error) {
-      console.error(error);
-      appToast.error(
-  "Instant claim failed or transaction was rejected.",
-  "claim",
-);
-    } finally {
-      setClaimingId(null);
-    }
+  try {
+    const approvalHash = await approveInstantClaimFee();
+    await waitForTransactionReceipt(config, { hash: approvalHash });
+
+    appToast.loading("Waiting for claim confirmation...", "claim");
+
+    const hash = await claimInstantReward(id);
+    await waitForTransactionReceipt(config, { hash });
+
+    await loadRewards();
+
+    appToast.success("Reward claimed instantly.", "claim");
+  } catch (error) {
+    console.error(error);
+    appToast.error("Instant claim failed or transaction was rejected.", "claim");
+  } finally {
+    setClaimingId(null);
+    setInstantClaiming(false);
   }
+}
 
   async function handleClaimAll() {
   setClaimingAll(true);
@@ -239,22 +248,31 @@ await loadRewards();
 }
 
 async function handleClaimAllInstant() {
+  if (instantClaiming || claimingAll) return;
+
+  setInstantClaiming(true);
   setClaimingAll(true);
 
-  appToast.loading("Waiting for wallet confirmation...", "claim-all");
+  appToast.loading("Approving instant claim fee...", "claim-all");
 
   try {
+    const approvalHash = await approveInstantClaimFee();
+    await waitForTransactionReceipt(config, { hash: approvalHash });
+
+    appToast.loading("Waiting for claim confirmation...", "claim-all");
+
     const hash = await claimAllInstantRewards();
-await waitForTransactionReceipt(config, { hash });
-await loadRewards();
+    await waitForTransactionReceipt(config, { hash });
+
+    await loadRewards();
 
     appToast.success("All rewards claimed instantly.", "claim-all");
   } catch (error) {
     console.error(error);
-
     appToast.error("Instant claim failed.", "claim-all");
   } finally {
     setClaimingAll(false);
+    setInstantClaiming(false);
   }
 }
 
@@ -425,7 +443,7 @@ await loadRewards();
                         ) : (
                           <button
                             onClick={() => handleInstantClaim(reward.id)}
-                            disabled={claimingId === reward.id}
+                            disabled={claimingId === reward.id || instantClaiming}
                             className="inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-400/30 bg-amber-400/10 px-5 py-3 font-semibold text-amber-300 hover:bg-amber-400/20 disabled:opacity-60"
                           >
                             <Rocket className="h-4 w-4" />

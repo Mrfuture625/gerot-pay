@@ -65,6 +65,7 @@ export default function CardDetailsPage() {
   const { address } = useAccount();
   const cardId = BigInt(String(params.cardId));
 
+
   const [card, setCard] = useState<VaultCard | null>(null);
   const [order, setOrder] = useState<SavedOrder | null>(null);
   const [loading, setLoading] = useState(false);
@@ -105,7 +106,7 @@ export default function CardDetailsPage() {
       </DashboardShell>
     );
   }
-
+const isPhysicalCard = card.cardType === 1;
   return (
     <DashboardShell
       title={cardName(card.cardType)}
@@ -130,7 +131,7 @@ export default function CardDetailsPage() {
     order?.inventoryCard?.expiryMonth,
     order?.inventoryCard?.expiryYear,
   )}
-  masked={false}
+  masked={isPhysicalCard}
 />
 
             <div className="mt-6 flex items-center justify-between">
@@ -210,38 +211,72 @@ export default function CardDetailsPage() {
           </Link>
         </section>
 
-<section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
-  <div className="mb-5">
+{isPhysicalCard ? (
+  <section className="rounded-[2rem] border border-emerald-400/20 bg-emerald-400/10 p-5">
     <p className="text-sm uppercase tracking-[0.25em] text-emerald-300">
-      Card Details
+      Physical Card Delivery
     </p>
-    <h2 className="mt-2 text-2xl font-semibold">
-      Assigned card information
-    </h2>
-  </div>
 
-  <div className="grid gap-3 md:grid-cols-2">
-    <DetailRow
-      label="Card Number"
-      value={formatCardNumber(order?.inventoryCard?.cardNumber)}
-    />
-    <DetailRow
-      label="Card Holder"
-      value={order?.cardHolderName ?? "Unavailable"}
-    />
-    <DetailRow
-      label="Expiry"
-      value={formatExpiry(
-        order?.inventoryCard?.expiryMonth,
-        order?.inventoryCard?.expiryYear,
-      )}
-    />
-    <DetailRow
-      label="CVV"
-      value={order?.inventoryCard?.cvv ?? "Unavailable"}
-    />
-  </div>
-</section>
+    <h2 className="mt-2 text-2xl font-semibold">
+      Your physical card is being prepared
+    </h2>
+
+    <p className="mt-3 text-sm leading-6 text-zinc-300">
+      Your KryptPay physical card ending in{" "}
+      <span className="font-semibold text-white">
+        •••• {order?.inventoryCard?.cardNumber?.slice(-4) ?? "----"}
+      </span>{" "}
+      has been successfully ordered. Delivery and shipping updates will be
+      shared soon.
+    </p>
+
+    <div className="mt-5 grid gap-3 md:grid-cols-2">
+      <DetailRow label="Card Holder" value={order?.cardHolderName ?? "Unavailable"} />
+      <DetailRow
+        label="Expiry"
+        value={formatExpiry(
+          order?.inventoryCard?.expiryMonth,
+          order?.inventoryCard?.expiryYear,
+        )}
+      />
+      <DetailRow label="Shipping Status" value="Preparing for shipment" />
+      <DetailRow label="Delivery Update" value="Coming soon" />
+    </div>
+  </section>
+) : (
+  <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
+    <div className="mb-5">
+      <p className="text-sm uppercase tracking-[0.25em] text-emerald-300">
+        Card Details
+      </p>
+      <h2 className="mt-2 text-2xl font-semibold">
+        Assigned card information
+      </h2>
+    </div>
+
+    <div className="grid gap-3 md:grid-cols-2">
+      <DetailRow
+        label="Card Number"
+        value={formatCardNumber(order?.inventoryCard?.cardNumber)}
+      />
+      <DetailRow
+        label="Card Holder"
+        value={order?.cardHolderName ?? "Unavailable"}
+      />
+      <DetailRow
+        label="Expiry"
+        value={formatExpiry(
+          order?.inventoryCard?.expiryMonth,
+          order?.inventoryCard?.expiryYear,
+        )}
+      />
+      <DetailRow
+        label="CVV"
+        value={order?.inventoryCard?.cvv ?? "Unavailable"}
+      />
+    </div>
+  </section>
+)}
 
         <section className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
           <div className="mb-5">
